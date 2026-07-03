@@ -73,12 +73,17 @@ onAuthChange((user) => {
   }
 });
 
-// Initialize the SPA once the DOM is fully parsed
-document.addEventListener('DOMContentLoaded', () => {
+function initApp() {
   // Set initial state: site visible, app hidden
   siteRoot.style.display = 'block';
   app.style.display = 'none';
 
   initRouter(app);
   patchLoginButtons();
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
