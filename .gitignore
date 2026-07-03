@@ -21,7 +21,8 @@ __pycache__/
 *.pyc
 
 # Dependencies & Build
-node_modules/
-dist/
-.api/
+/node_modules/
+/dist/
+/.api/
+
 
