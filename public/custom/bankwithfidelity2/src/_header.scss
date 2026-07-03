@@ -1,0 +1,212 @@
+
+#fdicBand {
+	position: sticky !important;
+    top: 0;
+    left: 0;
+    width: 100%;
+}
+#header {
+
+	@include boxShadow;
+
+	> .container-fluid {
+		padding: 0 3%;
+		@include media-breakpoint-up(xl) { padding: 0 4%; }
+		@include media-breakpoint-up(xxl) { padding: 0 6%; }
+	}
+
+	.logo {
+		padding: 15px 0 17px 0.75rem;
+		img { width: 224px; }
+	}
+
+	.ultratop {
+		display: flex;
+		align-items: center;
+		justify-content: flex-end;
+		margin-bottom: calc(20px - 0.5em);
+		@include media-breakpoint-down(md) { justify-content: center; }
+	}
+
+	@include media-breakpoint-up(md) {
+		position: sticky;
+		top: 35px;
+		background: #fff;
+		.oblPopupTrigger, .openAccount {
+			@include primaryButton;
+			padding: 16px 1em;
+			min-width: unset;
+			margin-left: 35px;
+			
+			&:before {
+				content: '\f023';  // lock
+			}
+		}
+		.openAccount {
+			&:before {
+				content: '\f007';  // user
+			}
+		}
+	}
+
+	// tablet only
+	@include media-breakpoint-only(md) {
+		padding: 15px 0 50px;
+		.oblPopupTrigger, .openAccount { margin-left: 20px; }
+		.logo { padding: 0 0 15px; }
+		.primaryNavWrapper {
+			position: absolute;
+			left: 0;
+			top: 100%;
+			width: 100%;
+			padding-bottom: 10px;
+			padding-right: 0.75rem;  // to bring it inline with edge of ultratop
+			.primaryNav {
+				justify-content: space-around;
+			}
+		}
+	}
+
+	@include media-breakpoint-down(md) {
+		height: $mobile-header-height;
+
+		.logo { 
+			padding: 10px 0;
+			text-align: center !important; 
+			img { width: 145px; }
+		}
+
+		.primaryNavLink, .oblPopupTrigger {
+			padding: 20px 0;
+			cursor: pointer;
+			text-transform: uppercase;
+			font-size: 12px;
+			font-weight: bold;
+			display: block;
+			text-decoration: none;
+			color: $darkblue;
+			i {
+				display: block;
+				font-size: 20px;
+				color: $blue;
+			}
+		}
+
+		.primaryNavLink[aria-expanded=true] {
+			background-color: $mobile-menu-bg;
+			color: $navbar-submenu-link-color;
+			i:before { content: '\f00d'; color: $navbar-submenu-link-color;}
+		}
+	}
+}
+
+
+
+.primaryNavWrapper {
+	align-items: center;
+	max-width: 800px;
+	margin-left: auto;
+	@include noMobile;
+	&:before {
+		content: "";
+		@include fullWidthBg($navbar-default-bg);
+		display: block;
+	}
+
+	.primaryNav {
+		position: static;
+		> li {
+			> a {
+				position: relative;
+				&:before {
+					content: '';
+					width: 0;
+					height: 6px;
+					background: $blue;
+					position: absolute;
+					bottom: 0; left: 0;
+					transition: all 0.25s ease-in-out;
+				}
+				&:hover {
+					&:not(.show) {
+						&:before { width: 100%; opacity: 0.5; }
+					}
+				}
+
+				&.show {
+					&:before {
+						width: 100%;
+						bottom: -18px;
+						z-index: 99999;
+						@include media-breakpoint-only(md) { bottom: -15px; }
+					}
+				}
+			}
+			> ul {
+				@include absoluteCenter;
+				text-align: left;
+				&::before {
+					@include boxShadow;
+				}
+				> li {
+					&.float-right { float: right; }
+				}
+			}
+			@include media-breakpoint-up(lg) {
+				&.nthChild-2 {
+					ul li.haschildren {
+						height: 395px;
+					}
+				}
+			}
+		}
+	}
+}
+
+.searchbox-toggle {
+	text-decoration: none!important;
+	display: block;
+	margin-left: 35px;
+	&:before {
+		@include faIcon("\f002");
+		display: block;
+		transition: $link-transition;
+		color: $blue;
+	}
+	&:hover {
+		&:before{ color: $darkestblue; }
+	}
+}
+
+.ultratopNav {
+	margin: 0; 
+	padding: 0;
+	> li {
+		padding: 0;
+		display: inline-block;
+		list-style: none;
+		line-height: 1;
+		~ li {
+			padding-left: 15px;
+		}
+		a {
+			@include fs(12);
+			font-weight: bold;
+			text-transform: uppercase;
+			color: $body-color;
+			text-decoration: none;
+			&:hover { text-decoration: underline; }
+		}
+	}
+	@include media-breakpoint-down(md) { display: none; }
+}
+
+#mobileMenu {
+	.primaryNav {
+		> li > a, >li > ul > li > a {
+			&.inPath { color: $blue; }
+		}
+		> li > a { @include fs(20); }
+		> li > ul > li > a { @include fs(18); }
+	}
+}

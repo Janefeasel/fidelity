@@ -1,0 +1,27 @@
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+
+# Logs
+*.log
+
+# Python (if using local server)
+__pycache__/
+*.pyc
+
+# Dependencies & Build
+node_modules/
+dist/
+.api/
+

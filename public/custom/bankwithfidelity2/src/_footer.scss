@@ -1,0 +1,111 @@
+.footer {
+	margin-top: $section-bottom-margin;
+	position: relative;
+
+	&::before {
+		content: '';
+		background-image: url(../image/pageimage-hex-overlay.png);
+		background-size: cover;
+		background-position: top;
+		background-repeat: no-repeat;
+		width: 75%;
+		height: 100%;
+		z-index: 0;
+		position: absolute;
+		right: 0; top: 0;
+		opacity: 0.2;
+	}
+
+	.footer-logo { display: block; max-width: 80%; }
+
+	h4 {
+		@include fs(16);
+		font-weight: bold;
+		display: inline-block;
+		padding: 0 30px 15px 0;
+		border-bottom: 1px solid #fff;
+		margin-bottom: 15px;
+	}
+
+	.social-wrapper {
+		h3 {
+			@include fs(16);
+			font-weight: bold;
+			margin-bottom: 15px;
+		}
+	}
+
+	.socialNav {
+		> li {
+			&:not(:last-child) { margin-right: 5px; }
+		}
+	}
+
+	.mobile-apps {
+		margin-top: 4rem;
+		@include media-breakpoint-up(md) {
+			margin-top: 2rem;
+		}
+		p {
+			margin: 0 0 5px;
+		}
+	}
+
+	.top-row { margin-bottom: 15px; }
+
+	.copyright { margin: 0; @include fs(15, $sm:14); }
+
+	@include media-breakpoint-down(xl) { padding-top: 60px; }
+
+	@include media-breakpoint-down(lg) {
+		padding-top: 40px;
+		.logo-wrapper {
+			text-align: center;
+			margin-bottom: 25px;
+		}
+		.footer-logo { max-width: 70%; margin: 0 auto; }
+		.top-row { margin-bottom: 25px; }
+	}
+
+	@include media-breakpoint-down(md) {
+		padding-top: 30px;
+		text-align: center;
+		.text-right, .text-start, .text-end { text-align: center !important; }
+		.navigation-wrapper, .links-wrapper, .compliance { margin-bottom: 25px; }
+		h4 {
+			padding: 0 20px 10px;
+			margin-bottom: 10px;
+		}
+		.social-wrapper h3 { margin-bottom: 10px; }
+	}
+}
+
+.footerNav, .quicklinksNav {
+	margin: 0;
+	padding: 0;
+	li {
+		list-style: none;
+		line-height: 1.6;
+		a {
+			@include fs(16, $sm:15);
+			color: #fff;
+			text-decoration: none;
+			&:hover { text-decoration: underline; }
+		}
+	}
+}
+
+.compliance {
+	> div {
+		display: inline-block;
+		vertical-align: bottom;
+		margin-right: 20px;
+		a { display: block; width: 100%; height: 100%; }
+		&:last-of-type { margin-right: 0; }
+	}
+}
+
+#eh, #eh svg { width: 66px; height: 70px; }
+#fdic, #fdic svg { width: 85px; height: 65px; }
+#ncua, #ncua svg {width: 155px; height: 50px; }
+#bv-logo, #bv-logo svg { width: 155px; height: 50px; }

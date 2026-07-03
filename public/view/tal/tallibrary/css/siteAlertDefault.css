@@ -1,0 +1,57 @@
+@charset "UTF-8";
+/* CSS Document */
+
+#siteAlert {
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: bold;
+    font-size: 20px;
+    color: #000;
+    background: #FCF432 url(/view/tal/tallibrary/images/siteAlertDefaultBkg.png) left top repeat-y;
+    position: relative;
+    width: 100%;
+}
+
+#siteAlert a {
+    /*text-decoration: none;*/
+    color: #000;
+}
+
+#siteAlertTitle {
+    color: #FFF;
+    background-color: #000;
+    width: 200px;
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    margin-top: -12px;
+    text-align: right;
+}
+
+#siteAlertLink {
+    font-size: 14px;
+    width: 150px;
+    position: absolute;
+    right: 15px;
+    bottom: 10px;
+    text-align: right;
+    background: #FCF432 url(/view/tal/tallibrary/images/siteAlertDefaultLinkArrow.png) right top no-repeat;
+    padding-right: 26px;
+    padding-top: 3px;
+    height: 25px;
+}
+
+#siteAlertText {
+    padding: 15px;
+    margin-left: 230px;
+    margin-right: 180px;
+}
+
+#siteAlertClose {
+    position: absolute;
+    right: 5px;
+    top: 5px;
+}
+
+.siteAlertHide {
+    display: none !important;
+}

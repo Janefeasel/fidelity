@@ -1,0 +1,25 @@
+// sidebars
+
+// column promos
+.column-promo {
+    padding: 1em;
+    text-align: center;
+    @include noMobile;
+
+    .icon {
+        position: relative;
+        @include hexIcon(88px, 102px, $lightblue);
+        margin: 0 auto 15px;
+        img { height: 45px; width: auto; }
+    }
+
+    a {
+        @include fs(20, $lg:19, $md:18);
+        font-weight: bold;
+        span { @include linkIcon($darkblue, $blue); }
+    }
+
+    &.clickable:hover a span { @include arrowLinkHover($blue); }
+
+    + .column-promo { margin-top: 1.5em; }
+}

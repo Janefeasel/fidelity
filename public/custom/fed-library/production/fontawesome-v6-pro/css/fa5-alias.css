@@ -1,0 +1,22 @@
+/* fa5-alias.css */
+
+@font-face {
+    font-family: "Font Awesome 5 Free";
+    src: url("../webfonts/fa-solid-900.woff2") format("woff2");
+    font-weight: 900;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "Font Awesome 5 Brands";
+    src: url("../webfonts/fa-brands-400.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "Font Awesome 5 Regular";
+    src: url("../webfonts/fa-regular-400.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+}

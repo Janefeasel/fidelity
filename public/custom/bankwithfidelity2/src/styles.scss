@@ -1,0 +1,452 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Roboto:ital,wght@0,400;0,500;0,700;1,400;1,500;1,700&display=swap');
+
+// SEE vendor/bv/fed-toolkit/src/lib/scss/_firstbranch-variables.scss FOR AVAILABLE VARIABLES
+
+//
+//
+// colors
+$blue: #4a70f5;
+$lightblue: #e7ecfd;
+$darkblue: #29396a;
+$darkestblue: #072A5A;
+$gray: #505050;
+$lightgray: #909492;
+$offwhite: #f7f8fc;
+
+$primary: $blue;
+$body-color: $gray;
+
+$link-color: $darkblue;
+$link-hover-color: $blue;
+
+$calc-primary-color: $primary;
+$label-color: #333;
+
+// modals
+$modal-backdrop-bg: #000;
+$modal-backdrop-opacity: 0.5;
+$search-popup-bg: rgba($primary, .95);
+$obl-popup-bg: #fff;
+$obl-popup-max-width: 690px;
+
+// custom color of button on confirm/warn popup
+$success: $primary;
+
+$social-nav-twitter-icon: "\e61a";
+
+
+//
+//
+// fonts
+$montserrat: 'Montserrat', sans-serif;
+$roboto: 'Roboto', sans-serif;
+$font-family-sans-serif: $roboto;
+$font-family-base: $roboto;
+$headings-font-family: $montserrat;
+$headings-font-weight: bold;
+$headings-margin-bottom: 1em;
+
+$h1-font-size: 32;
+$h1-font-size-lg: 30;
+$h1-font-size-md: 28;
+$h1-font-size-sm: 26;
+
+$h2-font-size: 30;
+$h2-font-size-lg: 26;
+$h2-font-size-md: 24;
+$h2-font-size-sm: 22;
+$h2-transform: uppercase;
+
+$h3-font-size: 22;
+$h3-font-size-lg: 20;
+$h3-font-size-md: 19;
+$h3-font-size-sm: 18;
+$h3-font: $roboto;
+$h3-weight: 400;
+
+$h4-font-size: 18;
+$h4-font-size-lg: 17;
+$h4-font-size-md: 16;
+$h4-font-size-sm: 15;
+$h4-font: $roboto;
+$h4-weight: 400;
+
+$h5-font-size: 15;
+
+$fs-base: 16;
+$line-height-base: 1.5;
+$paragraph-margin-bottom: 20px;
+
+
+// 
+// primary nav bar
+$navbar-caret: false;
+$navbar-default-bg: transparent;
+$navbar-default-link-color: $gray;
+$navbar-default-link-hover-color: $blue;
+$navbar-default-link-hover-bg: none;
+$navbar-default-link-active-bg: none;
+$navbar-default-link-active-color: $blue;
+$navbar-default-link-fs: 16;
+$navbar-default-link-fs-lg: $navbar-default-link-fs;
+$navbar-default-link-fs-md: $navbar-default-link-fs;
+$navbar-default-link-ff: $roboto;
+$navbar-default-link-fw: bold;
+$navbar-default-link-transform: none;
+$navbar-default-link-inPath-bg: $navbar-default-link-active-bg;
+$navbar-default-link-inPath-color: $navbar-default-link-active-color;
+$navbar-default-link-padding: .5em 0;
+
+$navbar-submenu-height: 400px;
+$navbar-submenu-padding: 3em 1em 2em 1em;
+$navbar-submenu-columns: 4; 
+$navbar-submenu-bg: #fff;
+$navbar-submenu-link-color: $darkblue;
+$navbar-submenu-link-hover-color: $blue;
+$navbar-submenu-link-ff: $roboto;
+$navbar-submenu-link-fw: bold;
+$navbar-submenu-link-transform: none;
+$navbar-submenu-link-fs: 22;
+$navbar-submenu-link-fs-lg: 20;
+$navbar-submenu-link-fs-md: 19;
+$navbar-submenu-link-border-width: 0;
+$navbar-submenu-link-border-style: solid;
+$navbar-submenu-link-border-color: transparent;
+
+$navbar-tertiary-link-color: $lightgray;
+$navbar-tertiary-link-fs: 16;
+$navbar-tertiary-link-fw: 400;
+
+// mobile menu
+$mobile-header-height: 140px;
+
+$mobile-menu-bg: $lightblue;
+$mobile-menu-nav-bg: none;
+$mobile-menu-nav-link-bg: none;
+$mobile-menu-nav-link-active-bg: $offwhite;
+$mobile-menu-nav-link-border: 1px solid $darkblue;
+$mobile-menu-nav-link-fs: $navbar-default-link-fs;
+$mobile-menu-nav-link-fw: $navbar-default-link-fw;
+$mobile-menu-nav-link-transform: $navbar-default-link-transform;
+$mobile-menu-secondary-link-fs: $navbar-submenu-link-fs;
+$mobile-menu-secondary-link-fw: $navbar-submenu-link-fw;
+$mobile-menu-secondary-link-transform: $navbar-submenu-link-transform;
+$mobile-menu-subnav-bg: $offwhite;
+
+// 
+// social nav
+$social-nav-color: rgba(#fff, 0.4);
+$social-nav-hover-color: #fff;
+$social-nav-fs: 25px;
+$social-nav-fb-icon: "\f082";
+$social-nav-twitter-icon: "\f081";
+$social-nav-youtube-icon: "\f431";
+$social-nav-instagram-icon: "\e055";
+
+//
+// buttons
+$btn-primary-radius: 5px;
+$btn-primary-padding: 16px 2em;
+$btn-primary-bg: $blue;
+$btn-primary-color: #fff;
+$btn-primary-border-color: transparent;
+$btn-primary-border-width: 0px;
+$btn-primary-hover-bg: darken($btn-primary-bg, 10%);
+$btn-primary-hover-color: #fff;
+$btn-primary-hover-border-color: transparent;
+$btn-primary-ff: $font-family-base;
+$btn-primary-fs: 12;
+$btn-primary-fw: bold;
+$btn-primary-transform: uppercase;
+$btn-box-shadow: 0px 4px 6px rgba(#000,0.4);
+// $btn-primary-gradient: linear-gradient(to bottom, #000 0%, #666 100%);
+// $btn-primary-hover-gradient: linear-gradient(to bottom, #666 0%, #000 100%);
+
+$btn-secondary-radius: 5px;
+$btn-secondary-padding: 14px 2em;
+$btn-secondary-bg: transparent;
+$btn-secondary-color: $darkblue;
+$btn-secondary-border-color: $darkblue;
+$btn-secondary-border-width: 2px;
+$btn-secondary-hover-color: #fff;
+$btn-secondary-hover-bg: $darkblue;
+$btn-secondary-hover-border-color: $darkblue;
+$btn-secondary-ff: $font-family-base;
+$btn-secondary-fs: 12;
+$btn-secondary-fw: bold;
+$btn-secondary-transform: uppercase;
+$btn-secondary-box-shadow: 0px 4px 6px rgba(#000,0.4);
+// $btn-secondary-gradient: linear-gradient(to bottom, #ccc 0%, #e4e4e4 100%);
+// $btn-secondary-hover-gradient: linear-gradient(to bottom, #e4e4e4 0%, #ccc 100%);
+
+$search-button-bg: $darkblue;
+$search-button-color: #fff;
+$search-button-hover-bg: $darkestblue;
+$search-button-hover-color: #fff;
+
+//
+// pages
+$page-header-height: 410px;
+$page-header-height-small: 180px;
+$video-embed-max-width: 600px;
+
+// comparison chart
+$chart-primary: $primary; // heading and feature row bg
+$chart-headline-color: #fff;
+$chart-account-color: #000;
+$chart-popular-bg: $darkblue;
+$chart-popular-color: #fff;
+$chart-border: 1px solid #000;
+$chart-headline-ff: $headings-font-family;
+$chart-headline-fs: 15;
+$chart-headline-fw: bold;
+$chart-headline-transform: uppercase;
+$chart-account-ff: $headings-font-family;
+$chart-account-fs: 15;
+$chart-account-fw: bold;
+$chart-account-transform: uppercase;
+
+// tables
+$table-head-bg: $primary;
+$table-head-color: #fff;
+
+// 
+// == Accordions
+$accordion-ff: $montserrat;
+$accordion-fs: 16;
+$accordion-fs-sm: $accordion-fs;
+$accordion-fw: bold;
+$accordion-transform: uppercase;
+$accordion-padding: 10px 1rem;
+
+$accordion-icon-width: 32px;
+$accordion-icon-color: #fff;
+$accordion-icon-hover-color: #fff;
+$accordion-icon-active-color: $accordion-icon-color;
+ 
+$accordion-button-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='#{$accordion-icon-color}'><path d='M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z'/></svg>");
+$accordion-button-hover-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='#{$accordion-icon-hover-color}'><path d='M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z'/></svg>");
+$accordion-button-active-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' fill='#{$accordion-icon-active-color}' viewBox='0 0 16 16'><path d='M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8z'/></svg>");
+
+$accordion-header-radius: 10px;
+$accordion-header-border: 2px solid #ebebeb;
+$accordion-header-bg: $darkblue;
+$accordion-header-hover-bg: lighten($darkblue,10%);
+$accordion-header-hover-border: $accordion-header-border;
+$accordion-header-color: #fff;
+$accordion-header-hover-color: #fff;
+$accordion-header-active-bg: $accordion-header-bg;
+$accordion-header-active-color: $accordion-header-color;
+$accordion-header-active-border: $accordion-header-border;
+$accordion-header-margin-bottom: 0px;
+
+$accordion-content-radius: 0;
+$accordion-content-padding: 1.5rem;
+$accordion-content-bg: transparent;
+$accordion-content-border: 2px solid #ebebeb;
+$accordion-content-margin: -2px 0 2px;
+
+//
+// footer
+$prefooter-color: #333;
+$prefooter-bg: #ccc;
+$prefooter-padding: 30px 0;
+
+$footer-color: #FFF;
+$footer-bg: $darkblue;
+$footer-padding: 90px 0 30px;
+
+// banner
+$slide-height: 670px;
+$slide-height-mobile: 360px;
+
+
+
+// mixins
+$link-fa-icon: '\f061';  // arrow-right, change as needed based on comp
+@mixin linkIcon($color, $hoverColor) {
+  text-decoration: none;
+  display: inline-block;
+  color: $color;
+  &:after {
+    @include faIcon($link-fa-icon);
+    display: inline-block;
+    vertical-align: baseline;
+    margin-left: 5px;
+    color: $link-hover-color;   // by default the icon is set to $link-hover-color, change as needed based on comp
+    transition: all .33s ease-in-out;
+  }
+  &:hover { @include arrowLinkHover($hoverColor); }
+}
+
+@mixin arrowLinkHover($hoverColor) {
+  color: $hoverColor;
+  &::after { transform: translateX(5px); color: $hoverColor; }
+}
+
+$checkmark: '\f00c';  // check
+@mixin addCheck {
+  position: relative;
+  list-style-type: none;
+  padding: 0 0 0 1.3em;
+  &::before{
+    position: absolute;
+    top: 4px;
+    left: 0px;
+    display: inline-block;
+    @include faIcon($checkmark);
+  }
+  ~ ul {
+      li {
+        list-style-type: disc;
+        &::marker {
+          color: $primary;  // change as needed based on comp
+        }
+    }
+  }
+}
+
+$cta-icon: '\f067';   // plus sign
+@mixin ctaIcon {
+  &::before {
+    @include faIcon($cta-icon);
+    display: inline-block;
+    font-size: 12px;
+    line-height: inherit;
+    padding-right: 12px;
+    border-right: 2px solid rgba($btn-primary-color,0.5);
+    margin-right: 12px;
+  }
+  &:hover {
+    &::before {
+      border-color: rgba($btn-primary-hover-color,0.5);
+    }
+  }
+  &:active {
+    box-shadow: none;
+    transform: translateY(4px);
+  }
+}
+// one for secondary buttons to change border color
+@mixin ctaIconSecondary {
+  &::before {
+    border-right: 2px solid rgba($btn-secondary-color,0.5);
+  }
+  &:hover {
+    &::before {
+      border-color: rgba($btn-secondary-hover-color,0.5);
+    }
+  }
+}
+
+
+@mixin hexIcon($hex-width, $hex-height, $background-color) {
+  position: relative;
+  // background: $background-color;
+  width: $hex-width;
+  height: $hex-height;
+  // clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  text-align: center;
+  line-height: $hex-height;
+  vertical-align: middle;
+  @include dropShadow();
+
+  &::before {
+    content: '';
+    background: $background-color;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0; left: 0;
+    clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  }
+
+  img {
+    position: absolute;
+    top: 0; right: 0; bottom: 0; left: 0; margin: auto;
+  }
+}
+
+@mixin boxShadow {
+  box-shadow: 0px 3px 6px rgba(#000,0.3);   // change as needed based on comp
+}
+
+@mixin dropShadow {
+  filter: drop-shadow(0px 3px 6px rgba(#000,0.3));   // should match box-shadow above
+}
+
+@mixin textShadow {
+  text-shadow: 0px 0px 20px rgba(#000, 0.3);   // change as needed based on comp
+}
+
+
+
+// toolkit
+@import "firstbranch";
+
+// site specific
+@import "header";
+@import "sidebar";
+@import "footer";
+@import "home";
+@import "modules";
+@import "locations";
+@import "banner";
+
+$calc-secondary-color: tint-color($calc-primary-color, 50);
+$calc-primary-text-color: set-button-text-color($calc-primary-color);
+$calc-secondary-text-color: set-button-text-color($calc-secondary-color);
+
+// css vars
+:root {
+  --font-size-base: #{$fs-base}px;
+  --font-size-base-sm: #{$fs-base-sm}px;
+  --link-color: #{$link-color};
+  --link-hover-color: #{$link-hover-color};
+  --calc-primary-color: #{$calc-primary-color};
+  --calc-secondary-color: #{$calc-secondary-color};
+  --calc-primary-text-color: #{$calc-primary-text-color};
+  --calc-secondary-text-color: #{$calc-secondary-text-color};
+  --chart-primary: #{$chart-primary};
+  --chart-primary-rgb: #{hexToRGB($chart-primary)};
+  --chart-popular-bg: #{$chart-popular-bg};
+  --chart-popular-color: #{$chart-popular-color};
+  --chart-headline-color: #{$chart-headline-color};
+  --chart-account-color: #{$chart-account-color};
+  --chart-border: #{$chart-border};
+  --chart-headline-ff: #{$chart-headline-ff};
+  --chart-headline-fs: #{$chart-headline-fs}px;
+  --chart-headline-fw: #{$chart-headline-fw};
+  --chart-headline-transform: #{$chart-headline-transform};
+  --chart-account-ff: #{$chart-account-ff};
+  --chart-account-fs: #{$chart-account-fs}px;
+  --chart-account-fw: #{$chart-account-fw};
+  --chart-account-transform: #{$chart-account-transform};
+  --label-ff: #{$label-ff};
+  --label-color: #{$label-color};
+  --label-fs: #{$label-fs};
+  --label-fw: #{$label-fw};
+}
+
+.accordion-item {
+  border: none;
+  box-shadow: none;
+  &:first-of-type .accordion-button {
+    border-top-left-radius: $accordion-header-radius;
+    border-top-right-radius: $accordion-header-radius;
+  }
+ &:last-of-type .accordion-button.collapsed:not([aria-expanded=true]) {
+    border-bottom-left-radius: $accordion-header-radius;
+    border-bottom-right-radius: $accordion-header-radius;
+  }
+}
+
+// add icon to cta buttons
+.primary-button > a, a.primary-button,
+.secondary-button > a, a.secondary-button, input[type=submit] {
+  @include ctaIcon();
+  min-width: 200px;
+}
+.secondary-button > a, a.secondary-button {
+  @include ctaIconSecondary();
+}

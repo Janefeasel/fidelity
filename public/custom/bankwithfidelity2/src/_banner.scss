@@ -1,0 +1,129 @@
+#banner {
+    
+}
+
+
+#bannerSlides {
+    &.no-slide {
+        visibility: visible;
+    }
+
+    .slide {
+
+        .slideContent {
+            @include verticalCenter;
+            z-index: 500;
+
+            * {
+                margin: 0;
+                color: #fff;
+            }
+
+            h2 {
+                @include fs(50, $lg:44, $md:38, $sm:32);
+                font-weight: bold;
+                text-transform: uppercase;
+                line-height: 1.2;
+                letter-spacing: 5px;
+                margin-bottom: 20px;
+            }
+
+            h3 {
+
+            }
+
+            p {
+                @include fs(20, $lg:20, $md:19, $sm:18);
+                font-weight: 500;
+            }
+
+            a {
+                @include primaryButton;
+                @include ctaIcon();
+                min-width: 200px;
+                margin-top: 40px;
+                ~ a { margin-left: 1em; }
+            }
+
+            @include media-breakpoint-up(md) {
+                max-width: calc(100% - 360px);   // to make sure it doesn't run into exposed OBL
+            }
+
+            @include media-breakpoint-up(xl) {
+                max-width: 430px;
+            }
+
+            @include media-breakpoint-down(md) {
+                max-width: 90%;
+                margin: 0 auto;
+                text-align: center;
+
+                h2 { margin-bottom: 12px; }
+                p {  }
+                a { margin-top: 20px; }
+            }
+        }
+
+        .slideImage {
+            @include fullWidth;
+            @include absoluteCenter;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+
+            &::before, &::after {
+                content: '';
+                @include fullWidthBg(url(../image/pageimage-hex-overlay.png));
+                background-size: cover;
+                background-position: top right;
+                background-repeat: no-repeat;
+                @include absoluteCenter;
+            }
+    
+            &::before {
+                opacity: 0.6;
+                @include media-breakpoint-down(md) { opacity: 0.3; }
+            }
+    
+            &::after {
+                background: rgba($darkestblue,0.6);
+                z-index: -2;
+            }
+        }
+        
+    }
+    .splide__pagination {
+        position: relative;
+        display: inline-block;
+        margin: 0 5px;
+        left: unset;
+        right: unset;
+        bottom: 0;
+        li {
+            &:hover, button.is-active { background: $primary; }
+        }
+    }
+    
+    .splide__arrows {
+        display: flex;
+        justify-content: center;
+        position: relative;
+        bottom: 40px;
+        @include media-breakpoint-down(md) { 
+            bottom: 20px;
+        }
+        > button {
+            transform: translateY(0);
+        }
+        button {
+            position: relative;
+            i { color: #fff; }
+            svg { fill: #fff; }
+            &:hover {
+                i { color: $primary; }
+                svg { fill: $primary; }
+            }
+            i {font-size: 20px; }
+        }
+    }
+}

@@ -1,0 +1,133 @@
+form.findBranch {
+	label { padding-right: 10px; }
+	input[type=text] { max-width: 190px; display: inline-block; }
+	input[type=submit] { @include secondaryButton; }
+
+	.location-details & { display: none; }
+}
+
+.locations-hours {
+	#map { margin-bottom: 30px; }
+	h2 {
+		~ #locList { margin-top: 1em; }
+	}
+}
+
+#locList {
+	margin: 2em 0;
+
+	&.atms {
+		.accordion-header button {
+			background: $blue;
+			&:hover {
+				background: darken($blue,10%);
+			}
+		}
+	}
+
+	li {
+		.branchName {
+			.branch-title {
+				pointer-events: none;
+				display: inline-block;
+				vertical-align: middle;
+				width: 65%;
+			}
+
+			.seeMap, .hasATM, .distance {
+				@include fs(16);
+				margin-top: 5px;
+			}
+			@include media-breakpoint-down(md) {
+				.branch-title { width: 100%; display: block; }
+				.seeMap, .hasATM, .distance {
+					display: inline-block !important;
+					float: none;
+				}
+			}
+		}
+
+		.branchInfo {
+			@include fs(14); 
+			
+			// with image
+			.branch-image {
+				margin-bottom: 20px;
+				@include media-breakpoint-up(md) {
+					@include make-col(6);
+					+ div { 
+						@include make-col(6); 
+						+ div { 
+							@include make-col-ready;
+							@include make-col(12); 
+							> div { margin-bottom: 20px; }
+						}
+					}
+				}
+				@include media-breakpoint-up(lg) {
+					@include make-col(3);
+					+ div { 
+						@include make-col(4);
+						+ div {
+							@include make-col(5);
+							> div { @include make-col-ready; @include make-col(12); }
+						}
+					 }
+				}
+			}
+
+			// without image
+			.contact-info {				
+				@include media-breakpoint-up(md) {
+					@include make-col(6);
+					+ div { 
+						 @include make-col(6);
+						 @include make-row;
+						 > div { margin-bottom: 20px; }
+					}
+				}
+
+				@include media-breakpoint-up(lg) {
+					@include make-col(4);
+					+ div { 
+						@include make-col(8);
+						@include make-row;
+						> div { @include make-col-ready; @include make-col(6); }
+					}
+				}
+				
+				.address {
+					margin-bottom: 20px;
+					> div { margin-bottom: 20px; }
+				}
+			}
+
+			.seeDetails, .getDirections { display: block; }
+
+			h5 {
+				margin-top: 0;
+				font-weight: bold;
+				font-family: $font-family-base;
+				@include fs(15);
+			}
+
+			.key {
+				font-weight: bold;
+				display: block;
+				padding-right: 4px;
+				@include media-breakpoint-up(lg) { display: inline-block; }
+			}
+
+			.contact > div, .hours > div > div { margin-bottom: 5px; }
+
+			.ext-detail-link {
+				margin-bottom: 15px;
+				> a { margin-bottom: 0 !important; }
+			}
+
+			@include media-breakpoint-down(md) {
+				.hours, .hours > div ~ div { padding-top: 15px; }
+			}
+		}
+	}
+}

@@ -1,0 +1,1291 @@
+body {
+	// overflow-x: hidden;  // used to prevent side scrolling when elements extend outside vw
+	* {
+		scroll-margin-top: 130px;  // adjusts for sticky header
+	}
+} 
+main { // use main instead of body for sticky headers
+	overflow-x: hidden;
+	&:not(:has(.page-header)) {
+		.page-content {
+			margin-top: 4em;
+		}
+	}
+} 
+
+#main {
+	> .container-fluid {
+		padding: 0 3%;
+		@include media-breakpoint-up(xl) { padding: 0 4%; }
+		@include media-breakpoint-up(xxl) { padding: 0 6%; }
+	}
+}
+
+// default spacing between accordion items
+.accordion-item {
+	~ .accordion-item { margin-top: 5px; }
+}
+
+// online banking
+#oblPopup {
+	// styling for default modal OBL
+	@include media-breakpoint-up(md) {
+		.oblPopupWrapper {
+			width: $obl-popup-max-width;
+			margin: 0 auto;
+			max-width: none;
+			> div {
+				display: inline-block;
+				vertical-align: top;
+				width: 340px;
+				height: 340px;
+				position: relative;
+				background: $obl-popup-bg;
+				~ div { margin-left: 10px; background: #ffffff; }
+			}
+		}
+	}
+
+	// styling for exposed OBL in banner & page-header
+	@include media-breakpoint-up(md) {
+		position: absolute;
+		right: 0; top: 30px;
+		z-index: 299;
+		width: 330px;
+		height: 350px;
+		border-radius: 5px;
+		@include boxShadow;
+		background: $obl-popup-bg;
+	}
+
+	@include media-breakpoint-up(xl) { right: 3.5%; }
+}
+
+// online banking login form styling
+.obLogin {
+	padding: 2em 1em 1em;
+	text-align: center;
+
+	h2 {
+		@include f($roboto, 18, bold);
+		color: $body-color;
+		margin: 0 0 10px;
+		&:before{
+			@include faIcon("\f023");
+			padding-right: 5px;
+			color: $blue;
+		}
+	}
+
+	.form-floating {
+		width: 300px;
+		max-width: 100%;
+		margin: auto;
+	}
+
+	input[type=text],
+	input[type=password] {
+		color: #333;
+		border: 1px solid $lightgray;
+		border-radius: 7px;
+	}
+
+	input[type=submit] {
+		@include primaryButton;
+		display: block;
+		margin: 10px auto;
+		width: 300px;
+		max-width: 100%;
+	}
+
+	.oblNav {
+		text-align: center;
+		margin: 0;
+		list-style: none;
+		padding: 10px 0 0;
+		li {
+			line-height: 1;
+			display: inline-block;
+			width: 100%;
+			+ li { margin-top: 5px; }
+			&:nth-child(1),
+			&:nth-child(2) {
+				width: auto;
+			}
+			&:nth-child(2) {
+				margin-left: 10px;
+				margin-top: 0;
+			}
+			a {
+				@include fs(14);
+				color: $body-color;
+				text-decoration: none;
+				&:hover { 
+					text-decoration: underline;
+				} 
+			}
+		}
+	}
+}
+
+// OBL promo styling
+.oblPromo {
+	.promo-content {
+		text-align: center;
+	}
+}
+
+
+// page headers
+.page-header {
+	height: $page-header-height;
+	position: relative;
+	margin-bottom: 90px;
+
+	.page-header-img {
+		@include fullWidth;
+		@include absoluteCenter;
+		background-repeat: no-repeat;
+		background-size: cover;
+		background-position: center;
+
+		&.default {
+			background-image: url(../image/pageimage-default.jpg);
+		}
+
+		&::before, &::after {
+			content: '';
+			@include fullWidthBg(url(../image/pageimage-hex-overlay.png));
+			background-size: cover;
+			background-position: top right;
+			background-repeat: no-repeat;
+			@include absoluteCenter;
+		}
+
+		&::before {
+			opacity: 0.6;
+			@include media-breakpoint-down(md) { opacity: 0.3; }
+		}
+
+		&::after {
+			background: rgba($darkestblue,0.6);
+			z-index: -2;
+		}
+	}
+
+	.page-header-content {
+		// @include verticalCenter;
+		position: absolute;
+		left: 0; bottom: 45px;
+		h1 { margin: 0; color: #fff; text-transform: uppercase; }
+		@include media-breakpoint-up(md) {
+			max-width: calc(100% - 350px - 3.5%);   // to make sure it doesn't run into exposed OBL
+		}
+		@include media-breakpoint-down(md) { bottom: 20px; }
+	}
+
+	.breadcrumb {
+		@include noMobile;
+		margin: 0;
+		padding: 0;
+		position: absolute;
+		top: calc(100% + 30px);
+		ul, li {
+			margin: 0;
+			padding: 0;
+			list-style: none;
+			display: inline;
+		}
+		li {
+			a {
+				display: inline-block;
+				@include f($montserrat, 14);
+				text-transform: uppercase;
+				color: $body-color;
+				text-decoration: none;
+				margin-right: 7px;
+				&::after {
+					content: '/';
+					display: inline;
+					padding-left: 7px;
+				}
+				&:hover { text-decoration: underline; }
+			}
+			&.selected {
+				a {
+					font-weight: bold;
+					padding-right: 0;
+					cursor: not-allowed;
+					pointer-events: none;
+					&::after { display: none; }
+				}
+			}
+		}
+		ul.nthTier-3 {
+			li a:not(.selected) {
+				font-weight: bold;
+				padding-right: 0;
+				&::after { display: none; }
+			}
+		}
+	}
+
+	@include media-breakpoint-down(md) {
+   		height: $page-header-height-small;
+   		margin-bottom: 2em;
+   	}
+}
+
+// comparison chart
+.comparison-chart {
+	.account {
+		.account-headline {
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			h2 {
+				font-size: 14px !important;
+			}
+		}
+		.account-name {
+			h2 {
+				font-size: 20px !important;
+			}
+		}
+	}
+}
+a.viewall {
+	display: block;
+	margin: $section-bottom-margin 0 20px;
+	text-align: center;
+	text-decoration: none;
+	&:after {
+        @include faIcon($link-fa-icon);
+        vertical-align: baseline;
+        margin-left: 5px;
+		color: $link-hover-color;
+    }
+}
+
+// content lists & search results
+.content-list, #froisearch-results > ul {
+	margin: 0;
+	.content-item, > li {
+		margin-bottom: 2em;
+		padding-bottom: 2em;
+		border-bottom: 1px solid #d3d3d3;
+		@include clearfix;
+		position: relative;
+		@include make-row;
+		margin-left: 0; margin-right: 0;
+		&:last-child { border-bottom: none; padding-bottom: 0; }
+
+		// default list styling used for old list page design and search results
+		&:not(.images, .two-ctas) {
+			.content-details { @include clearfix; width: 100%; }
+
+			> *:not(.content-details), .content-details > *:not(.primary-button) {
+				@include make-col-ready;
+	
+				@include media-breakpoint-up(md) { 
+					@include make-col(9);
+					padding-left: 0; 
+				}
+			}
+	
+			.primary-button, .secondary-button {
+				@include primaryButton;
+				@include media-breakpoint-up(md) {
+					@include make-col-ready;
+					@include make-col(3);
+					position: absolute;
+					right: 0;
+					top: 0;
+				}
+			}
+		}
+
+		> h2, > h3, .content-details h2, .content-details h3 {
+			@include f($montserrat, 30, bold, $size-lg:26, $size-md:24, $size-sm:22);
+			text-transform: uppercase;
+			color: $body-color;
+			margin: 0 0 10px;
+			font-weight: bold; 
+			a { text-decoration: none; color: inherit; }
+		}
+
+		p, ul { margin: 0; padding: 0; }
+		ul li { margin: 0 0 0 16px; list-style: disc outside; }
+		p, li { color: $body-color; @include fs(16, $md:15, $sm:15); }
+
+		&.clickable:hover .primary-button,
+		&.clickable:hover .secondary-button { @include primaryButtonHover; }
+
+		@include media-breakpoint-down(md){
+			h2, h3 { text-align: center; }
+			.primary-button, .secondary-button { max-width: 280px; margin: 15px auto 0; display: block; padding-left: 0; padding-right: 0; }
+		}
+
+		// styling specific for new list page styling using alternating images/content
+		&.images {
+			align-items: center;
+			border-bottom: none;
+
+			.content-image {
+				position: relative;
+				height: 360px;
+				.bg {
+					position: absolute;
+					width: 100%;
+					max-width: 580px;
+					height: 100%;
+					left: 0;
+					right: auto;
+					top: 0;
+					background-size: cover;
+					background-position: center;
+					border-radius: 10px;
+				}
+			}
+	
+			.content-details {
+				padding: 1em 7%;
+			}
+
+			&.even {
+				flex-direction: row-reverse;
+				.content-image {
+					.bg {
+						left: auto;
+						right: 0;
+					}
+				}
+			}
+	
+			.primary-button, .secondary-button {
+				@include primaryButton;
+				margin-top: 20px;
+			}
+
+			@include media-breakpoint-down(xl) {
+				.content-details { padding: 1em 2em; }
+			}
+	
+			@include media-breakpoint-down(md) {
+				padding-bottom: 1em;
+				margin-bottom: 1em;
+				.content-image {
+					width: 100%;
+					height: 240px;
+				}
+				.content-details {
+					width: 100%;
+					padding: 1em;
+					text-align: center;
+					ul { display: inline-block; text-align: left; }
+				}
+			}
+		}
+
+		// custom content list styling for open an account page with dual CTAs
+		&.two-ctas {
+			> .content-details {
+				@include media-breakpoint-up(md) {
+					@include make-col-ready;
+					@include make-col(9);
+				}
+				> * { float: none !important; width: 100% !important; display: block; }
+			}
+		
+			> .buttons {
+				@include media-breakpoint-up(md) {
+					@include make-col-ready;
+					@include make-col(3);
+				}
+				text-align: center;
+				> div.primary-button {
+					display: block;
+					> a { display: block; padding-left: 10px; padding-right: 10px; }
+				}
+				> a {
+					display: block;
+					font-weight: bold;
+					text-transform: uppercase;
+					@include linkIcon($darkblue, $blue);
+					text-decoration: none;
+					margin-top: 15px;
+				}
+			}
+		}
+	}
+}
+
+// category page intro (setup in structure)
+.category-intro {
+	text-align: center;
+	max-width: 880px;
+	margin: 0 auto 4em;
+	@include media-breakpoint-down(md) {
+		margin-bottom: 2.5em;
+	}
+}
+
+// page content
+.page-content {
+	&.has-features {
+		@include media-breakpoint-up(xl) { padding: 0 30px; }
+		> p { margin: 0; }
+		> h2 { text-align: center; line-height: 1.4; margin-top: 0; }
+	}
+	h4 { text-transform: uppercase; }
+	&.welcome-bonus-content {
+		.product-features {
+			border: none;
+		}
+	}
+}
+
+.page-details {
+	margin-top: $section-bottom-margin;
+	div.primary-button { text-align: center; display: block; margin-bottom: $section-bottom-margin; }
+}
+
+// key features styling
+.product-features {
+	margin: 2em 0 4em;
+	&:empty { display: none; }
+	&.list-page {
+		padding: 30px 0;
+		border-bottom: 1px solid #ccc;
+		margin: 0 0 30px;
+	}
+	ul {
+		display: flex;
+		justify-content: center;
+		padding: 0;
+		margin: 0;
+		width: 100%;
+		> li {
+			flex: 1 1 24%;
+			text-align: center;
+			margin: 0; 
+			padding: 0 20px; 
+			line-height: 1.25;
+			list-style: none;
+			~ li { border-left: 2px solid #e1e1e1; }
+			.icon {
+				position: relative;
+				@include hexIcon(88px, 102px, $lightblue);
+				margin: 0 auto 15px;
+				img { height: 70px; width: auto; }
+			}
+			span {
+				display: block;
+				@include fs(20);
+				margin-bottom: 20px;
+			}
+		}
+	}
+
+	.feature-title {
+		text-align: center;
+		@include fs(22, $lg:20, $md:19, $sm:18);
+		color: $darkestblue;
+		text-transform: uppercase;
+	}
+
+	@include media-breakpoint-down(md){
+		margin: 2em 0 1em;
+		.feature-title { margin-bottom: 5px; }
+		ul {
+			flex-wrap: wrap;
+			> li {
+				flex: 0 1 49%;
+				padding: 0 0 20px;
+				~ li { border-left: none; }
+			}
+		}
+	}
+}
+
+// questions - share - print links
+.other-links {
+	text-align: center;
+	margin-bottom: 2em;
+	> a, .share-buttons > div > a {
+		display: inline-block;
+		vertical-align: middle;
+		text-transform: uppercase;
+		text-decoration: none;
+		cursor: pointer;
+		padding: 0 20px;
+		line-height: 1;
+		@include fs(14);
+		font-weight: bold;
+		color: $gray;
+		border-right: 2px solid $gray;
+		&:hover { text-decoration: underline; }
+	}
+
+	.share-buttons > div:first-child > a, > a:first-of-type { padding-left: 0; }
+	> a + .share-buttons > div:first-child > a { padding-left: 20px; }
+
+	.share-buttons {
+		display: inline-block;
+		vertical-align: baseline;
+		line-height: 1;
+	
+		> div {
+			display: inline-block;
+			vertical-align: top;
+			line-height: 1;
+			@include media-breakpoint-up(md) {
+				&.print > a { padding-right: 0; border-right: 0; }
+			}
+		}
+	
+		.share { display: inline-block !important; }
+	}
+
+	@include media-breakpoint-down(md){
+		> a:first-of-type, .share-buttons > div:first-of-type > a { padding-left: 0 !important; }
+		> a:last-of-type, .share-buttons > div.share > a { padding-right: 0; border-right: 0; }
+		.share-buttons { display: block; margin-top: 10px; }
+	}
+}
+
+// default styling for app store buttons
+a.itunes, a.google {
+    font-size: 0;
+    color: transparent;
+    line-height: 0;
+    display: inline-block;
+    vertical-align: middle;
+	width: 156px;
+	height: 46px;
+	background-image: url(../image/appstore.svg);
+	background-size: contain;
+	background-repeat: no-repeat;
+    &:hover { opacity: .7; }
+}
+// change image for google play store
+a.google {
+    background-image: url(../image/googleplay.svg);
+}
+.rss {
+	padding: 5px 10px;
+	color: #ffffff;
+	background: $orange;
+	display: inline-block;
+	text-decoration: none;
+	text-transform: uppercase;
+	@include fs(14);
+	&:hover {
+		color: #ffffff;
+		background: darken($orange, 10%);
+		text-decoration: none;
+	}
+}
+
+// for hidden text that's accessible, h1 etc
+.sr-only {
+	border: 0;
+	clip: rect(0 0 0 0);
+	height: 1px;
+	margin: -1px;
+	overflow: hidden;
+	padding: 0;
+	position: absolute;
+	width: 1px;
+}
+
+
+// *** Blog ***
+// Styling for placeholder FI logo if no post image is uploaded
+.content-item.post {
+	.image {
+		.inner {
+			position: relative;
+			width: 100%;
+			padding-top: calc(350/500 * 100%);  // set to default aspect ratio of 500x350 image, adjust as needed
+			background: #eee;  // adjust this as necessary for contrast with FI logo
+			img {  // styling of logo-2x inside container
+				width: 80%;
+				position: absolute;
+				top: 50%;
+				left: 50%;
+				right: 0;
+				bottom: 0;
+				transform: translateX(-50%) translateY(-50%);
+			}
+			// adjusting placeholder sizing for news blog post image size of 600x400
+			&.news {
+				padding-top: calc(400/600 * 100%);  // set to default aspect ratio of 600x400 image, adjust as needed
+			}
+			// adjusting placeholder sizing for financial education blog post image size of 480x240
+			&.education {
+				padding-top: calc(240/480 * 100%);  // set to default aspect ratio of 480x240 image, adjust as needed
+			}
+		}
+	}
+}
+
+// Default row layout blog list styling
+.content-list:not(.grid) .content-item.post {
+	@include media-breakpoint-up(md) {
+		.image {
+			width: 30%;
+			flex: initial;
+			max-width: initial;
+		}
+		.content-details {
+			width: 66%;
+			margin-left: 3%;
+			> *:not(.primary-button) {
+				width: 100%;
+				max-width: unset;
+				flex: initial;
+			}
+			a.read-more {
+				float: left;
+				clear: left;
+				position: inherit;
+				margin: 15px 0 0;
+				width: 220px;
+				max-width: 220px;
+			}
+		}
+	}
+	@include media-breakpoint-down(md) {
+		.image {
+			margin-bottom: 20px;
+		}
+	}
+}
+
+// grid layout blog list styling
+.content-list.grid .content-item.post {
+	padding-bottom: 0;
+	border: none;
+	.wrapper {
+		position: relative;
+		height: 100%;
+		.image {
+			
+		}
+		.content-details {
+			padding: 20px;
+			h3 {
+				margin-bottom: 10px;
+			}
+			p {
+				margin: 0;
+				&.date {
+					margin-bottom: 5px;
+					font-weight: bold;
+				}
+			}
+		}
+		&:hover {
+			// add in hover styling here
+		}
+	}
+}
+
+// blog - detail styling
+.blog {
+	a.view-all {
+		
+	}
+	p.date {
+		margin-bottom: 10px;
+	}	
+	.post {
+		margin-bottom: 20px;
+		> *:first-child { margin-top: 0; }
+		h2, figure { margin-bottom: 20px; }
+	}
+}
+
+// blog pagination styling
+#blog-pagination {
+	margin-top: 30px;
+	a {
+		font-weight: bold;
+		@include fs(20);
+		display: inline-block;
+		margin: 0;
+		text-decoration: none;
+		~ a { margin-left: 15px; }
+		&.previous {
+			&:before {
+				@include faIcon("\f0d9"); // update fa icon code to match rest of site
+				display: inline-block;
+				vertical-align: baseline;
+				margin-right: 5px;
+				// color: $link-color;
+				transition: $link-transition;
+			}
+		}
+		&.next {
+			// @include arrowLink($link-color);
+		}
+	}
+}
+
+// default blog tags styling
+.tag-cloud, .archive-cloud {
+	padding:  0 1em 1em;
+	margin-bottom: 20px;
+	h4 {
+		font-weight: 700;
+		font-family: $montserrat;
+		@include fs(22);
+		margin: 0 0 5px;
+	}
+	ul {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		ul { padding-left: 20px; }
+	}
+}
+
+// Styling unique to blog tags above grid list
+.blog-tag-wrapper {
+	margin-bottom: 3em;
+	.tag-cloud {
+		width: 100%;
+		h4 {  // styling should match or be similar to .feature-title from key features
+			text-align: center;
+		}
+		ul {  // adjust the justify and gap as necessary
+			margin: 0;
+			padding: 0;
+			list-style: none;
+			display: flex;
+			flex-wrap: wrap;
+			justify-content: center;
+			gap: 30px;
+			li {
+				line-height: 1;
+				padding: 10px;
+				a {
+					
+				}
+			}
+		}
+	}
+}
+
+
+// cookie consent styling
+.cc-banner {
+	text-align: center !important;
+	display: block !important;
+	padding: 3em 0 !important;
+	box-shadow: -2px 2px 18px rgba(0, 0, 0, 0.6);
+	.cc-message {
+		display: block !important;
+		margin-bottom: 1em !important;
+		font-size: 17px;
+		padding: 0 2em .5em;
+	}
+	.cc-compliance {
+		text-align: center !important;
+		display: inline-block !important;
+	}
+	.cc-btn {
+		padding: 5px 25px;
+		font-size: 17px;
+		border-width: 0;
+		border-style: solid;
+		font-weight: 700;
+		text-decoration: none;
+		line-height: 1.1;
+		transition: all 0.25s;
+		min-width: 130px;
+	}
+
+	&.cc-window.cc-invisible {
+		visibility: hidden;
+	}
+}
+
+
+// Meet Our Team styling
+// Shared styling between grid and row layouts of .team-member
+.team-member {
+	h3 {
+		margin: 0 0 8px;
+	}
+	h4 { margin-bottom: 5px; }
+	a.review, a.learn-more {
+		font-weight: bold;
+		margin: 5px 0 0;
+		@include linkIcon($darkblue, $blue);
+		display: block;
+	}
+}
+
+// grid specific styling
+.team-grid {
+	img {
+		width: 90%;
+		max-width: 190px;
+		margin-bottom: 20px;
+	}
+	.team-member {
+		margin-bottom: 30px;
+		p { margin-bottom: 0; }
+
+		@include media-breakpoint-down(md) {
+			margin-bottom: 20px;
+			img { margin-bottom: 12px; }
+		}
+	}
+}
+// row specific styling
+.team-row {
+	p {
+		a {
+			margin-top: 15px;
+			~ a { margin-left: 60px; }
+		}
+	}
+	.row {
+		~ .row {
+			margin-top: calc(3em - 20px);
+			padding-top: 3em;
+			border-top: 1px solid #ebebeb;
+		}
+	}
+	@include media-breakpoint-down(md) {
+		img {
+			max-width: 190px;
+			margin-bottom: 12px;
+		}
+		p a {
+			display: block;
+			~ a { margin: 5px 0 0; }
+		}
+	}
+}
+
+
+// location listing specific styling
+.fcl-wrapper,
+.branch-add {
+	display: flex;
+	justify-content: space-evenly;
+	@include media-breakpoint-down(md) {
+		display: block;
+		> div {
+			width: 100%;
+			text-align: center;
+		}
+	}
+	h2 {
+		@include fs(24, $md:22, $sm:20);
+		margin-bottom: 10px;
+	}
+	> div {
+		flex: 1 1 0;
+	}
+	
+}
+.myb-content {
+	a {
+		@include primaryButton;
+		@include ctaIcon;
+		position: relative;
+		width: 245px;
+		text-align: left;
+		padding-left: 50px;
+		&:before {
+			position: absolute;
+			left: 15px;
+			top: 50%;
+			transform: translate(0, -50%);
+		}
+	}
+}
+.fcl-content {
+	h2 {
+		text-align: center;
+	}
+	.team-member {
+		align-items: center;
+		* { margin: 0; }
+		h3 { @include fs(20, $sm:18); }
+		h4 { @include fs(16, $sm:15); }
+		p { @include fs(15, $sm:14); }
+		@include media-breakpoint-down(md) {
+			text-align: center;
+			img { margin-bottom: 12px; }
+		}
+	}
+}
+// location details styling
+.loc.detail {
+	display: flex;
+	gap: 40px;
+	@include media-breakpoint-down (md) {
+		flex-direction: column;
+		align-items: center;
+		.banker-info {
+			order: 3;
+		}
+	}
+	.banker-info {
+		flex: 0 0 18%;
+		.fcl-wrapper {
+			margin-top: -1rem;
+			.fcl-content {
+				h2 {
+					display: none;
+				}
+			}
+		}
+		.team-member {
+			flex-direction: column;
+			margin: 0;
+			> div {
+				width: 100%;
+				padding: 0;
+			} 
+			img {
+				margin-bottom: 10px;
+				width: 100%;
+			}
+		}
+	}
+	.branch-info {
+		flex: 1;
+		.branchName .branch-title {
+			@include fs(24);
+		}
+	}
+}
+// rates page
+#rates {
+	.dropdown {
+		button {
+			@include secondaryButton;
+		}
+	}
+	.rate {
+		h3,.h3 {
+			a {
+				@include linkIcon($link-color, $link-hover-color);
+				font-weight: bold;
+				&.back-to-top {
+					margin-left: 10px;
+					&::after {
+						transform: rotate(-90deg) !important;
+					}
+				}
+				&.app-link { margin-right: 10px; }
+				&:hover {
+					&::after { transform: none; }
+				}
+			}
+		}
+	}
+}
+
+// social media feed links
+.social-feed {
+	display: flex;
+	flex-wrap: wrap;
+	> a {
+		flex: 0 1 295px;
+		margin: 0 20px 20px 0;
+		text-decoration: none;
+		@include fs(18);
+		font-weight: bold;
+		text-transform: uppercase;
+		letter-spacing: 2px;
+		line-height: 1.2;
+		position: relative;
+		padding: 10px;
+		border-radius: 10px;
+		display: flex;
+		align-items: center;
+		&:before {
+			@include faBrand($social-nav-fb-icon);
+			font-size: 50px;
+			margin-right: 15px;
+		}
+	}
+}
+
+a.social-feed-fb {
+	color: #3b5998;
+	border: 1px solid #3b5998;
+	&:hover { color: #fff; background: #3b5998;}
+}
+
+a.social-feed-linkedin {
+	&:before { content: "\f08c"; }
+	color: #0077B5;
+	border: 1px solid #0077B5;
+	&:hover { color: #fff; background: #0077B5;}
+}
+
+a.social-feed-instagram {
+	&:before { content: "\f16d"; }
+	color: #a36f3e;
+	border: 1px solid #a36f3e;
+	&:hover { color: #fff; background: #a36f3e;}
+}
+
+a.social-feed-twitter {
+	&:before { content: "\e61a"; }
+	color: #00aced;
+	border: 1px solid #00aced;
+	&:hover { color: #fff; background: #00aced;}
+}
+
+a.social-feed-youtube {
+	&:before { content: "\f167"; font-size: 44px; }
+	color: #bb0000;
+	border: 1px solid #bb0000;
+	&:hover { color: #fff; background: #bb0000;}
+}
+
+a.social-feed-tiktok {
+	&:before { content: "\e07b"; font-size: 44px; }
+	color: #000;
+	border: 1px solid #000;
+	&:hover { color: #fff; background: #000;}
+}
+
+
+// account finder styling
+#afContent {
+	
+	margin-bottom: 20px;
+	@include media-breakpoint-up(md) {
+		padding: 30px;
+		margin-bottom: 60px;
+	}
+	p {
+		@include fs(18);
+	}
+	.finder-wrapper {
+		.account-finder-wrapper {
+			padding: 20px;
+			background: $lightblue;
+			border: none;
+			border-radius: 5px;
+			@include media-breakpoint-up(md) {
+				padding: 45px;
+			}
+			.card {
+				padding: 0;
+				background: none;
+				border: none;
+				border-radius: none;
+				box-shadow: none;
+				.card-body {
+					h3 {
+						margin-bottom: 45px;
+					}
+					.card-text {
+						a:not(.primary-button) {
+							display: block;
+							width: 50%;
+							padding: 30px;
+							background: #fff;
+							@include fs(26);
+							font-weight: bold;
+							text-decoration: none;
+							@include boxShadow;
+							&:hover {
+								background: $blue;
+								color: #fff;
+							}
+							~ a {
+								margin-left: 30px;
+							}
+						}
+						.list-group-item {
+							background-color: $lightblue;
+						}
+					}
+				}
+				&:not(.af-result) {
+					.card-text {
+						display: flex;
+						justify-content: space-between;
+					}
+				}
+			}
+		}
+	}
+	.panel-nav {
+		span {
+			margin-top: 15px;
+			color: $darkblue;
+			@include fs(24);
+			font-weight: bold;
+			text-decoration: none;
+			&::after {
+				@include faIcon('\f01e');
+				// color: $blue;
+				display: inline-block;
+				vertical-align: baseline;
+				margin-left: 5px;
+			}
+			&:hover {
+				color: $blue;
+				// &::after {
+				// 	color: $blue;
+				// }
+			}
+		}
+	}
+}
+
+
+// Financial calculators cards
+.calculator-card {
+	position: relative;
+	margin-bottom: 25px;
+
+	.wrapper {
+		transition: $link-transition;
+		@include boxShadow;
+		height: 200px;
+		background: #fff;
+		border: 1px solid #ebebeb;
+		border-radius: 5px;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		padding: 0 20px;
+	}
+
+	img {
+		width: 70px;
+		height: auto;
+		margin-bottom: 10px;
+	}
+
+	p {
+		@include fs(18);
+		margin: 0;
+		a {
+			color: $link-color;
+			text-decoration: none;
+		}
+	}
+
+	&:hover {
+		p a {
+			color: $link-hover-color;
+		}
+	}
+}
+.testimonials {
+	margin-bottom: 30px;
+	.testimonial-card {
+		.inner {
+			background: $blue;
+			border-radius: 10px;
+			margin-bottom: 15px;
+			box-shadow: 0 3px 10px #333;
+			overflow: hidden;
+		}
+		.image {
+			position: relative;
+			width: 100%;
+			border-radius: 10px;
+			padding-top: calc(350/500 * 100%);  // set to default aspect ratio of 500x350 image, adjust as needed
+			background: #fff;  // adjust this as necessary for contrast with FI logo
+			box-shadow: 0px 4px 9px #333;
+			img {  // styling of logo-2x inside container
+				width: 80%;
+				position: absolute;
+				top: 50%;
+				left: 50%;
+				right: 0;
+				bottom: 0;
+				transform: translateX(-50%) translateY(-50%);
+			}
+		}
+		.content {
+			padding: 15px;
+			p {
+				font-weight: 800;
+				color: #fff;
+				&:last-child {
+					font-weight: 400;
+					margin-bottom: 0;
+				}
+			}
+		}
+	}
+}
+
+// blockquote styling
+
+blockquote {
+	@include fs(22);
+	width: 80%;
+	margin: 50px auto;
+	font-style: italic;
+	color: #555;
+	padding: 1.2em 30px 1.2em 75px;
+	border-left: 8px solid #555 ;
+	line-height: 1.3;
+	position: relative;
+	background:#EDEDED;
+	&:before {
+		font-family: Arial;
+		content: "\201C";
+		color: #555;
+		font-size:4em;
+		position: absolute;
+		left: 10px;
+		top: -10px;
+	}
+	&:after {
+		content: '';
+	}
+	em {
+		display: block;
+		color:#333;
+		font-style: normal;
+		font-weight: bold;
+		margin-top: 1em;
+	  }
+}
+
+// chat style overrides
+.five9-frame {
+	// right: 0 !important;
+	// bottom: 4px !important;
+	// text-align: right !important;
+	.five9-chat-button {
+		background: #4a70f5 !important;
+		border-radius: 10px 10px 0 0;
+		// border-radius: 10px 0 0 10px ;
+		height: 42px !important;
+		.five9-text {
+			font-size: 22px!important;
+		}
+	}
+	.five9-action-btn {
+		background: #4a70f5 !important;
+		border-radius: 10px 10px 0 0;
+		&:hover:not(disabled) {
+			background: darken(#4a70f5, 10%) !important;
+		}
+	}
+	// .five9-frame-full {
+	// 	display: none;
+	// }
+}

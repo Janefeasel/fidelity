@@ -1,0 +1,386 @@
+// 
+// generic styling for headline text (outside of homepage wrapper so it can be used on downstreams also)
+.fp-headline {
+    margin-bottom: 40px;
+
+    * {
+        margin: 0;
+    }
+
+    h4 {
+        @include fs(20, $lg:19, $md:18, $sm:17);
+        font-weight: bold;
+        color: $body-color;
+        margin-bottom: 15px;
+    }
+
+    h2 {
+        @include fs(30, $lg:26, $md:24, $sm:22);
+        font-weight: bold;
+        text-transform: uppercase;
+        color: $body-color;
+        + p, + h3 { margin-top: 15px; }
+    }
+
+    h3 {
+        @include fs(26, $lg:24, $md:22, $sm:20);
+        font-weight: bold;
+        color: $body-color;
+    }
+
+    p {
+        @include fs(20, $lg:19, $md:18, $sm:17);
+    }
+
+    @include media-breakpoint-down(xl) {
+        margin-bottom: 32px;
+    }
+
+    @include media-breakpoint-down(md) {
+        margin-bottom: 25px;
+        h4 { margin-bottom: 10px; }
+        h2 {
+            + p, + h3 { margin-top: 10px; }
+        }
+    }
+}
+
+#homePage {
+
+    .banner-wrapper {
+		position: relative;
+
+		#oblPopup {
+            @include media-breakpoint-up(md) {
+                top: 140px;
+                right: 0;
+            }
+		}
+	}
+
+    .footer { margin-top: 0; }
+
+    #main {
+        position: relative;
+        &::before {
+            content: '';
+            @include fullWidthBg($offwhite);
+            @include absoluteCenter;
+            z-index: -4;
+        }
+    }
+
+    // 
+    // setting spacing and custom styling for rows
+    .inset-icons {
+        padding: 60px 0;
+        background: #fff;
+        border-radius: 5px;
+        @include boxShadow;
+        @include media-breakpoint-down(xl) { padding: 45px 0; }
+        @include media-breakpoint-down(md) {
+            padding: 30px 0;
+        }
+    }
+
+    .banner-inset {
+        margin-top: -40px;
+        .app-buttons {
+            margin-top: 50px;
+            a ~ a { margin-left: 20px; }
+        }
+        @include media-breakpoint-down(xl) {
+            .app-buttons { margin-top: 40px; }
+        }
+        @include media-breakpoint-down(md) {
+            margin-top: 0;
+            border-radius: 0;
+            .app-buttons {
+                margin-top: 0;  // .fp-icon has margin-bottom of 30px already
+                a ~ a { margin-left: 12px; }
+            }
+        }
+    }
+
+    .full-feature-inset {
+        margin-top: -190px;
+        @include media-breakpoint-down(xl) { margin-top: -130px; }
+        @include media-breakpoint-down(md) {
+            width: 100%;
+            margin: -50px auto 0;
+            padding-bottom: 0;  // .fp-icon already has margin-bottom of 30px
+        }
+    }
+
+    .hex-images {
+        // padding: 210px 0;
+        margin: -60px 0 -40px;
+
+        &::before {
+			content: '';
+			@include fullWidthBg(url(../image/pageimage-hex-overlay.png));
+			background-size: cover;
+			background-position: top right;
+			background-repeat: no-repeat;
+			@include absoluteCenter;
+            z-index: -3;
+		}
+
+        &.top {
+            &::before {
+                transform: translateX(-50%) scaleX(-1) !important;  // flip image to come from left side instead of right
+            }
+        }
+
+        &.bottom {
+            margin-top: -80px;
+        }
+
+        @include media-breakpoint-down(md) {
+            margin: 0 !important;
+            padding: 50px 0;
+        }
+    }
+
+
+    // 
+    // styling for homepage features
+
+    // feature with icon
+    .fp-icon {
+        * { margin: 0; }
+
+        .icon {
+            position: relative;
+            @include hexIcon(88px, 102px, $lightblue);
+            margin: 0 auto 15px;
+            img { height: 50px; width: auto; }
+        }
+        
+        h3 {
+            @include fs(20, $lg:19, $md:18, $sm:18);
+            font-weight: bold;
+            color: $darkblue;
+            a {
+                span {
+                    @include linkIcon($darkblue,$blue);
+                    &::after { display: inline; }
+                }
+            }
+            + p { margin-top: 15px; }
+        }
+        p {
+            @include fs(16, $lg:16, $md:15, $sm:15);
+        }
+
+        &.clickable:hover {
+            h3 a span { @include arrowLinkHover($blue); }
+        }
+
+        @include media-breakpoint-down(lg) {
+            br { display: none; }
+            h3 + p { margin-top: 10px; }
+        }
+
+        @include media-breakpoint-down(md) {
+            margin-bottom: 30px;
+        }
+    }
+
+
+    // Full width feature w/ image
+    .fp-image-right, .fp-image-left {
+        height: 840px;
+        position: relative;
+
+        .row { align-items: center; }
+
+        .image {
+            position: relative;
+            height: 860px;
+            .bg {
+                position: absolute;
+                width: 44.375vw;    // 710px (original 1x image width) / 1600px (comp width) * 100vw
+                height: 100%;
+                left: 0;
+                top: 0;
+                background-size: cover;
+                background-position: left;
+                background-repeat: no-repeat;
+                z-index: -2;
+            }
+        }
+
+        .content {
+            padding: 1em 2em;
+            * { margin: 0; }
+    
+            h2 {
+                @include fs(50, $lg:44, $md:38, $sm:32);
+                margin-bottom: 20px;
+            }
+
+            p {
+                @include fs(20, $lg: 19, $md:18, $sm:17);
+                font-weight: 500;
+            }
+
+            a {
+                @include primaryButton;
+                @include ctaIcon();
+                min-width: 200px;
+                margin-top: 40px;
+                ~ a { margin-left: 1em; margin-top: 1em; }
+            }
+        }
+
+        ~ .fp-image-right, ~ .fp-image-left { margin-top: 45px; }
+
+        @include media-breakpoint-down(xl) {
+            height: 720px;
+            .image { height: 720px; }
+            .content {
+                padding: 1em;
+                br { display: none; }
+                a { min-width: unset; }
+            }
+        }
+        
+        @include media-breakpoint-down(lg) {
+            height: 660px;
+            .image { height: 660px; }
+            .content {
+                h2 { margin-bottom: 15px; }
+                a {
+                    margin-top: 30px;
+                    ~ a { margin-left: 0; }
+                }
+            }
+        }
+
+        @include media-breakpoint-down(md) {
+            height: auto;
+            .image {
+                display: none;
+                .bg { 
+                    width: 100%;
+                    @include absoluteCenter;
+                    border-radius: 20px;
+                }
+			}
+            .content {
+                text-align: center;
+                h2 { margin-bottom: 12px; }
+                a { margin-top: 20px; }
+            }
+
+            ~ .fp-image-right, ~ .fp-image-left { margin-top: 30px; }
+        }
+    }
+
+    .fp-image-left {
+        @include media-breakpoint-up(md) {
+            .image {
+                .bg {
+                    left: auto;
+                    right: 0;
+                    background-position: right;
+                }
+            }
+            .content {
+                
+            }
+        }
+    }
+
+
+    // full width feature w/ BG image
+    .full-feature-bg {
+		position: relative;
+		.row { margin: 0; }
+		.bg-image {
+			@include fullWidthBg(inherit);
+			@include absoluteCenter;
+			background-size: cover;
+			background-position: center;
+            &::before {
+                content: '';
+                @include fullWidthBg(rgba($darkblue,0.6));
+                @include absoluteCenter;
+            }
+		}
+		.featured-content {
+            * {
+                margin: 0;
+                color: #fff;
+            }
+
+            // styling of text follows what's used for .fp-headline
+            h4 {
+                @include fs(20, $lg:19, $md:18, $sm:17);
+                font-weight: bold;
+                margin-bottom: 15px;
+            }
+        
+            h2 {
+                @include fs(30, $lg:26, $md:24, $sm:22);
+                font-weight: bold;
+                text-transform: uppercase;
+            }
+        
+            p {
+                @include fs(20, $lg:19, $md:18, $sm:17);
+            }
+
+            a {
+                @include primaryButton;
+                @include ctaIcon();
+                min-width: 200px;
+                margin-top: 40px;
+                ~ a { margin-left: 1em; }
+            }
+
+			@include media-breakpoint-up(md) {
+				height: 300px;
+				padding: 0;
+				.inner {
+					@include verticalCenter;
+				}
+			}
+
+            @include media-breakpoint-up(xl) {
+                height: 360px;
+            }
+		}
+
+        &.tall {
+            .featured-content {
+                padding-bottom: 50px;   // to account for full-feature-inset margin-top: -50px
+                @include media-breakpoint-up(md) {
+                    height: 360px;
+                    padding-bottom: 130px;  // to account for full-feature-inset margin-top: -130px
+                }
+                @include media-breakpoint-up(xl) {
+                    height: 425px;
+                    padding-bottom: 190px;  // to account for full-feature-inset margin-top: -190px
+                }
+            }
+        }
+
+        @include media-breakpoint-down(xl) {
+            .featured-content {
+                a { margin-top: 30px; }
+            }
+        }
+
+		@include media-breakpoint-down(md) {
+			.featured-content {
+                h4 { margin-bottom: 10px; }
+                a { margin-top: 20px; }
+				.inner { padding: 50px 0; }
+			}
+            
+		}
+	}
+
+}

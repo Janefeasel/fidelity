@@ -1,0 +1,44 @@
+@media print {
+    #mobileMenu,
+    .primaryNavLink,
+    .logo a:after,
+    .oblToggler,
+    .ultratopNav,
+    .oblToggled,
+    .obLogin,
+    .primaryNavWrapper,
+    .primaryNav,
+    .site-search,
+    .breadcrumb,
+    .primary-button,
+    .other-links,
+    .sidebar,
+    .column-promo,
+    .prefooter,
+    .share-buttons,
+    .footerNav,
+    .social,
+    .socialNav,
+    .quicklinksNav,
+    .oblPopupTrigger,
+    .page-header-img {
+        display: none !important;
+    }
+    footer.footer {
+        background: none !important;
+    }
+    .page-header {
+        height: auto;
+    }
+    .page-header-content {
+        position: static !important;
+        margin-top: 40px;
+    }
+    .accordion-content,
+    .accordion-collapse {
+        display: block !important;
+    }
+    #header {
+        box-shadow: none !important;
+    }
+}
