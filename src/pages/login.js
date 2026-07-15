@@ -27,9 +27,10 @@ function renderForm(container) {
               <input type="text" class="form-control" id="authName" placeholder="Full Name" style="${currentMode === 'login' ? 'display:none' : ''}" />
               <label for="authName" style="${currentMode === 'login' ? 'display:none' : ''}">Full Name</label>
             </div>
-            <div class="form-floating mb-3">
-              <input type="password" class="form-control" id="authPassword" placeholder="Password" required />
+            <div class="form-floating mb-3" style="position:relative">
+              <input type="password" class="form-control" id="authPassword" placeholder="Password" required style="padding-right:44px"/>
               <label for="authPassword">Password</label>
+              <button type="button" class="pw-toggle" id="toggleAuthPw" tabindex="-1">👁</button>
             </div>
             <button type="submit" class="btn btn-primary auth-submit" id="authSubmitBtn">
               ${currentMode === 'login' ? 'Sign In' : 'Create Account'}
@@ -91,6 +92,17 @@ function renderForm(container) {
       submitBtn.textContent = currentMode === 'login' ? 'Sign In' : 'Create Account';
     }
   });
+
+  // Password visibility toggle
+  const toggleBtn = container.querySelector('#toggleAuthPw');
+  const pwInput = container.querySelector('#authPassword');
+  if (toggleBtn && pwInput) {
+    toggleBtn.addEventListener('click', () => {
+      const isHidden = pwInput.type === 'password';
+      pwInput.type = isHidden ? 'text' : 'password';
+      toggleBtn.textContent = isHidden ? '👁‍🗨' : '👁';
+    });
+  }
 }
 
 export function renderLoginPage(container) {

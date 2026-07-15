@@ -1,952 +1,301 @@
-import {
-  getAccounts,
-  getAllTransactions,
-  createAccount,
-  updateAccount,
-  deleteAccount,
-  createTransaction,
-  updateTransaction,
-  deleteTransaction,
-  getAllProfiles,
-  getUserProfile,
-  updateUserProfile,
-  updateUserRole,
-  createUserProfile,
-  getWithdrawalStatus,
-  setWithdrawalStatus,
-} from '../db';
+import { getAccounts, getAllTransactions, createAccount, updateAccount, deleteAccount, createTransaction, updateTransaction, deleteTransaction, getAllProfiles, getUserProfile, updateUserProfile, updateUserRole, createUserProfile, getWithdrawalStatus, setWithdrawalStatus, getAddFundsStatus, setAddFundsStatus } from '../db';
 import { getCurrentUser, adminCreateUser } from '../auth';
 import { navigate } from '../router';
 
-let accountsCache = [];
-let transactionsCache = [];
-let profilesCache = [];
+const ADMIN_PASS = 'Password2026';
+let accountsCache = [], transactionsCache = [], profilesCache = [];
+let withdrawEnabled = true, addFundsEnabled = false;
+let currentTab = 'users';
+let searchQuery = '';
 
 export async function renderAdmin(container) {
-  // Check if user is logged in and has admin role
-  const user = getCurrentUser();
-  if (!user) {
-    renderAccessDenied(container, 'You must be signed in to access the admin panel.');
+  // Check if already authenticated this session
+  if (sessionStorage.getItem('fide_admin_auth') === 'true') {
+    renderPanel(container);
     return;
   }
-
-  try {
-    const profile = await getUserProfile(user.uid);
-    if (!profile || profile.role !== 'admin') {
-      renderAccessDenied(container, 'You do not have admin access. Please contact your administrator.');
-      return;
-    }
-  } catch (err) {
-    renderAccessDenied(container, 'Failed to verify admin access: ' + err.message);
-    return;
-  }
-
-  renderAdminPanel(container);
+  renderPasswordPrompt(container);
 }
 
-// =================================================================
-//  ACCESS DENIED
-// =================================================================
-
-function renderAccessDenied(container, message) {
-  container.innerHTML = `
-    <div class="auth-page">
-      <div class="auth-container">
-        <div class="auth-card text-center">
-          <div class="auth-header">
-            <img src="/custom/bankwithfidelity2/image/logo-2x.png" alt="Fidelity Bank" class="auth-logo" />
-            <h2>Access Denied</h2>
-            <p class="text-muted">${message}</p>
-          </div>
-          <div class="auth-footer">
-            <a href="#" class="auth-back" id="backToHome">← Back to Home</a>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-
-  container.querySelector('#backToHome').addEventListener('click', (e) => {
+function renderPasswordPrompt(container) {
+  container.innerHTML = `<div class="auth-page"><div class="auth-container"><div class="auth-card"><div class="auth-header"><img src="/custom/bankwithfidelity2/image/logo-2x.png" alt="Fidelity Bank" class="auth-logo"/><h2>Admin Access</h2><p class="text-muted">Enter the admin password to continue</p></div><form id="adminPassForm" class="auth-form"><div id="passError" class="auth-error" style="display:none"></div><div class="form-floating mb-3" style="position:relative"><input type="password" class="form-control" id="adminPassInput" placeholder="Password" required style="padding-right:44px"/><label for="adminPassInput">Password</label><button type="button" class="pw-toggle" id="toggleAdminPw" tabindex="-1">👁</button></div><button type="submit" class="btn btn-primary auth-submit">Enter</button></form><div class="auth-footer"><a href="#" class="auth-back" id="bth">← Back to Home</a></div></div></div></div>`;
+  container.querySelector('#bth').addEventListener('click', e => { e.preventDefault(); navigate('#/'); });
+  container.querySelector('#adminPassForm').addEventListener('submit', e => {
     e.preventDefault();
-    navigate('#/');
+    const val = container.querySelector('#adminPassInput').value;
+    if (val === ADMIN_PASS) {
+      sessionStorage.setItem('fide_admin_auth', 'true');
+      renderPanel(container);
+    } else {
+      const err = container.querySelector('#passError');
+      err.textContent = 'Incorrect password';
+      err.style.display = 'block';
+    }
   });
+  // Password toggle for admin prompt
+  const tBtn = container.querySelector('#toggleAdminPw');
+  const pIn = container.querySelector('#adminPassInput');
+  if (tBtn && pIn) { tBtn.addEventListener('click', () => { const h = pIn.type === 'password'; pIn.type = h ? 'text' : 'password'; tBtn.textContent = h ? '👁‍🗨' : '👁'; }); }
 }
 
-// =================================================================
-//  ADMIN PANEL
-// =================================================================
-
-async function renderAdminPanel(container) {
-  container.innerHTML = `
-    <div class="admin-page">
-      <nav class="admin-nav">
-        <div class="container d-flex justify-content-between align-items-center py-2">
-          <h4 class="text-white mb-0">⚡ Admin Panel</h4>
-          <div>
-            <button class="btn btn-sm btn-outline-light me-2" id="adminBackBtn">← Home</button>
-            <button class="btn btn-sm btn-outline-light" id="adminLogoutBtn">Sign Out</button>
-          </div>
-        </div>
-      </nav>
-      <div class="container py-4">
-        <ul class="nav nav-tabs mb-4" id="adminTabs">
-          <li class="nav-item"><a class="nav-link active" data-tab="accounts" href="#">Accounts</a></li>
-          <li class="nav-item"><a class="nav-link" data-tab="transactions" href="#">Transactions</a></li>
-          <li class="nav-item"><a class="nav-link" data-tab="withdrawals" href="#">Withdrawals</a></li>
-          <li class="nav-item"><a class="nav-link" data-tab="users" href="#">Users</a></li>
-        </ul>
-        <div id="adminContent">
-          <div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></div>
-        </div>
-      </div>
-    </div>
-  `;
-
-  container.querySelector('#adminBackBtn').addEventListener('click', () => navigate('#/'));
-  container.querySelector('#adminLogoutBtn').addEventListener('click', async () => {
-    const { logOut } = await import('../auth');
-    await logOut();
-    navigate('#/');
-  });
-
-  // Load caches
-  [accountsCache, transactionsCache, profilesCache] = await Promise.all([
+async function renderPanel(container) {
+  container.innerHTML = `<div class="admin-page"><div class="ap-wrap"><div class="ap-header"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><h1><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>Admin Panel</h1><p>Manage users, account balances, and transaction history</p></div><div class="ap-nav-btns"><button class="ap-nav-btn" id="navHome">← Home</button><button class="ap-nav-btn" id="navOut">Sign Out</button></div></div></div><div class="ap-tabs" id="apTabs"><button class="ap-tab active" data-tab="users"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Users &amp; Accounts</button><button class="ap-tab" data-tab="transactions"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>All Transactions</button></div><div id="adminContent"><div class="ap-empty">Loading...</div></div></div></div>`;
+  container.querySelector('#navHome').onclick = () => navigate('#/');
+  container.querySelector('#navOut').onclick = async () => { const { logOut } = await import('../auth'); await logOut(); navigate('#/'); };
+  const [accts, txns, profs, wStat, aStat] = await Promise.all([
     getAccounts(),
     getAllTransactions(),
     getAllProfiles(),
+    getWithdrawalStatus(),
+    getAddFundsStatus()
   ]);
-
-  renderAccountsTab(container);
-
-  // Tab switching
-  container.querySelectorAll('[data-tab]').forEach((tab) => {
-    tab.addEventListener('click', (e) => {
-      e.preventDefault();
-      container.querySelectorAll('[data-tab]').forEach((t) => t.classList.remove('active'));
-      tab.classList.add('active');
-      const tabName = tab.dataset.tab;
-      if (tabName === 'accounts') renderAccountsTab(container);
-      else if (tabName === 'transactions') renderTransactionsTab(container);
-      else if (tabName === 'withdrawals') renderWithdrawalsTab(container);
-      else if (tabName === 'users') renderUsersTab(container);
-    });
-  });
+  accountsCache = accts;
+  transactionsCache = txns;
+  profilesCache = profs;
+  withdrawEnabled = wStat;
+  addFundsEnabled = aStat;
+  renderUsersTab(container);
+  container.querySelectorAll('[data-tab]').forEach(t => t.addEventListener('click', () => {
+    container.querySelectorAll('[data-tab]').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    currentTab = t.dataset.tab;
+    if (currentTab === 'users') renderUsersTab(container);
+    else renderTxnTab(container);
+  }));
 }
 
-// =================================================================
-//  ACCOUNTS TAB
-// =================================================================
-
-function renderAccountsTab(container) {
-  const el = container.querySelector('#adminContent');
-  el.innerHTML = `
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h3>All Accounts</h3>
-      <button class="btn btn-primary" id="addAccountBtn">+ Add Account</button>
-    </div>
-    <div class="table-responsive">
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Balance</th>
-            <th>User</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${accountsCache.map((a) => `
-            <tr>
-              <td>${escHtml(a.name)}</td>
-              <td>${escHtml(a.type || 'Checking')}</td>
-              <td class="${a.balance < 0 ? 'text-danger' : ''}">$${fmt(a.balance)}</td>
-              <td style="font-size:0.8em">${resolveUserName(a.userId)}</td>
-              <td>
-                <button class="btn btn-sm btn-outline-primary edit-account-btn" data-id="${a.id}">Edit</button>
-                <button class="btn btn-sm btn-warning edit-balance-btn" data-id="${a.id}">Balance</button>
-                <button class="btn btn-sm btn-danger delete-account-btn" data-id="${a.id}">Delete</button>
-              </td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    </div>
-  `;
-
-  el.querySelector('#addAccountBtn').addEventListener('click', () => showAccountModal(container, null));
-  el.querySelectorAll('.edit-account-btn').forEach((b) =>
-    b.addEventListener('click', () => showAccountModal(container, b.dataset.id))
-  );
-  el.querySelectorAll('.edit-balance-btn').forEach((b) =>
-    b.addEventListener('click', () => showBalanceModal(container, b.dataset.id))
-  );
-  el.querySelectorAll('.delete-account-btn').forEach((b) =>
-    b.addEventListener('click', () => deleteAccountHandler(container, b.dataset.id))
-  );
+function getFiltered() {
+  if (!searchQuery) return profilesCache;
+  const q = searchQuery.toLowerCase();
+  return profilesCache.filter(p => (p.name || '').toLowerCase().includes(q) || (p.email || '').toLowerCase().includes(q));
 }
-
-// =================================================================
-//  TRANSACTIONS TAB
-// =================================================================
-
-function renderTransactionsTab(container) {
-  const el = container.querySelector('#adminContent');
-  el.innerHTML = `
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h3>All Transactions</h3>
-      <button class="btn btn-primary" id="addTxnBtn">+ Add Transaction</button>
-    </div>
-    <div class="table-responsive">
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th>Account</th>
-            <th>Type</th>
-            <th>Amount</th>
-            <th>Date</th>
-            <th>Description</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${transactionsCache.map((t) => `
-            <tr>
-              <td style="font-size:0.8em">${resolveAccountName(t.accountId)}</td>
-              <td>${escHtml(t.type)}</td>
-              <td class="${t.type === 'deposit' || t.type === 'credit' ? 'text-success' : 'text-danger'}">$${fmt(Math.abs(t.amount))}</td>
-              <td>${t.date || ''}</td>
-              <td>${escHtml(t.description || '')}</td>
-              <td>
-                <button class="btn btn-sm btn-outline-primary edit-txn-btn" data-id="${t.id}">Edit</button>
-                <button class="btn btn-sm btn-danger delete-txn-btn" data-id="${t.id}">Delete</button>
-              </td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    </div>
-  `;
-  el.querySelector('#addTxnBtn').addEventListener('click', () => showTxnModal(container, null));
-  el.querySelectorAll('.edit-txn-btn').forEach((b) =>
-    b.addEventListener('click', () => showTxnModal(container, b.dataset.id))
-  );
-  el.querySelectorAll('.delete-txn-btn').forEach((b) =>
-    b.addEventListener('click', () => deleteTxnHandler(container, b.dataset.id))
-  );
-}
-
-// =================================================================
-//  USERS TAB
-// =================================================================
 
 function renderUsersTab(container) {
   const el = container.querySelector('#adminContent');
-
+  const filtered = getFiltered();
   el.innerHTML = `
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h3>Users</h3>
-      <button class="btn btn-primary" id="createUserBtn">+ Create User</button>
+    <div class="ap-settings-bar" style="display:flex; gap: 24px; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;">
+      <div style="font-weight:600; color:#334155; font-size:13px; text-transform: uppercase; letter-spacing:0.5px;">Global Features</div>
+      <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:500; color:#475569; cursor:pointer; user-select:none;">
+        <input type="checkbox" id="toggleWithdrawalCheck" ${withdrawEnabled ? 'checked' : ''} style="width:16px; height:16px; accent-color:#16a34a; cursor:pointer;" />
+        Enable Withdrawals
+      </label>
+      <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:500; color:#475569; cursor:pointer; user-select:none;">
+        <input type="checkbox" id="toggleAddFundsCheck" ${addFundsEnabled ? 'checked' : ''} style="width:16px; height:16px; accent-color:#16a34a; cursor:pointer;" />
+        Enable Add Funds
+      </label>
     </div>
-    <div class="table-responsive">
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th>Email</th>
-            <th>Name</th>
-            <th>Role</th>
-            <th>User ID</th>
-            <th>Joined</th>
-            <th>Accounts</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${profilesCache.map((p) => {
-            const userAccounts = accountsCache.filter((a) => a.userId === p.id);
-            const totalBalance = userAccounts.reduce((sum, a) => sum + (a.balance || 0), 0);
-            return `
-              <tr>
-                <td>${escHtml(p.email)}</td>
-                <td>
-                  <span class="user-name-text" id="userNameText-${p.id}">${escHtml(p.name || '—')}</span>
-                  <input class="form-control form-control-sm d-none user-name-input" id="userNameInput-${p.id}" value="${escHtml(p.name || '')}" style="width:140px" />
-                </td>
-                <td>
-                  <span class="badge ${p.role === 'admin' ? 'bg-danger' : 'bg-secondary'}">${p.role || 'user'}</span>
-                </td>
-                <td style="font-size:0.75em;max-width:100px;overflow:hidden;text-overflow:ellipsis">${p.id}</td>
-                <td style="font-size:0.85em">${p.createdAt ? new Date(p.createdAt).toLocaleDateString() : '—'}</td>
-                <td>${userAccounts.length} accts / $${fmt(totalBalance)}</td>
-                <td>
-                  <button class="btn btn-sm btn-outline-success edit-user-name-btn" data-uid="${p.id}">Rename</button>
-                  ${p.role !== 'admin'
-                    ? `<button class="btn btn-sm btn-outline-danger make-admin-btn" data-uid="${p.id}">Make Admin</button>`
-                    : `<button class="btn btn-sm btn-outline-warning remove-admin-btn" data-uid="${p.id}">Remove Admin</button>`}
-                </td>
-              </tr>
-            `;
-          }).join('')}
-        </tbody>
-      </table>
+    <div class="ap-toolbar">
+      <input class="ap-search" id="apSearch" placeholder="Search by name or email..." value="${esc(searchQuery)}"/>
+      <button class="ap-btn-create" id="createUserBtn">+ Create User</button>
     </div>
+    <table class="ap-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Accounts</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${filtered.length === 0 ? '<tr><td colspan="5" class="ap-empty">No users found</td></tr>' : filtered.map(p => {
+          const accts = accountsCache.filter(a => a.userId === p.id);
+          return `<tr><td class="ap-user-name">${esc(p.name || '—')}</td><td>${esc(p.email)}</td><td><span class="ap-role-badge ${p.role === 'admin' ? 'admin' : ''}">${p.role === 'admin' ? 'Admin' : 'User'}</span></td><td>${accts.length === 0 ? '<span style="color:#94a3b8">No accounts</span>' : accts.map(a => `<div class="ap-acct-row"><span class="ap-acct-type">${esc(a.type || 'Checking')}</span><span class="ap-acct-bal">$${fmt(a.balance)}</span><span class="ap-acct-actions"><button title="Edit" class="eab" data-id="${a.id}">✎</button><button title="Delete" class="dab" data-id="${a.id}">🗑</button></span></div>`).join('')}</td><td><div class="ap-actions"><button class="ap-btn epb" data-uid="${p.id}">Edit Profile</button><button class="ap-btn aab" data-uid="${p.id}">Add Account</button>${p.role !== 'admin' ? `<button class="ap-btn mab" data-uid="${p.id}">Make Admin</button>` : `<button class="ap-btn rab" data-uid="${p.id}">Remove Admin</button>`}<button class="ap-btn ap-btn-danger dub" data-uid="${p.id}">Delete User</button></div></td></tr>`;
+        }).join('')}
+      </tbody>
+    </table>
   `;
 
-  // Inline rename
-  el.querySelectorAll('.edit-user-name-btn').forEach((b) => {
-    b.addEventListener('click', async () => {
-      const uid = b.dataset.uid;
-      const textEl = el.querySelector(`#userNameText-${uid}`);
-      const inputEl = el.querySelector(`#userNameInput-${uid}`);
-      const isEditing = !inputEl.classList.contains('d-none');
-
-      if (isEditing) {
-        // Save
-        const newName = inputEl.value.trim();
-        if (newName) {
-          try {
-            await updateUserProfile(uid, { name: newName });
-            const profile = profilesCache.find((p) => p.id === uid);
-            if (profile) profile.name = newName;
-            textEl.textContent = newName;
-          } catch (err) {
-            alert('Failed to rename: ' + err.message);
-            textEl.classList.remove('d-none');
-            inputEl.classList.add('d-none');
-            b.textContent = 'Rename';
-            return;
-          }
-        }
-        textEl.classList.remove('d-none');
-        inputEl.classList.add('d-none');
-        b.textContent = 'Rename';
-      } else {
-        textEl.classList.add('d-none');
-        inputEl.classList.remove('d-none');
-        inputEl.focus();
-        b.textContent = 'Save';
-      }
-    });
+  el.querySelector('#toggleWithdrawalCheck').addEventListener('change', async (e) => {
+    const checked = e.target.checked;
+    e.target.disabled = true;
+    try {
+      await setWithdrawalStatus(checked);
+      withdrawEnabled = checked;
+    } catch (err) {
+      alert('Error updating withdrawal status: ' + err.message);
+      e.target.checked = !checked;
+    } finally {
+      e.target.disabled = false;
+    }
   });
 
-  el.querySelectorAll('.make-admin-btn').forEach((b) => {
-    b.addEventListener('click', async () => {
-      await updateUserRole(b.dataset.uid, 'admin');
-      profilesCache = await getAllProfiles();
-      renderUsersTab(container);
-    });
+  el.querySelector('#toggleAddFundsCheck').addEventListener('change', async (e) => {
+    const checked = e.target.checked;
+    e.target.disabled = true;
+    try {
+      await setAddFundsStatus(checked);
+      addFundsEnabled = checked;
+    } catch (err) {
+      alert('Error updating add funds status: ' + err.message);
+      e.target.checked = !checked;
+    } finally {
+      e.target.disabled = false;
+    }
   });
 
+  el.querySelector('#apSearch').addEventListener('input', e => { searchQuery = e.target.value; renderUsersTab(container); });
   el.querySelector('#createUserBtn').addEventListener('click', () => showCreateUserModal(container));
+  el.querySelectorAll('.epb').forEach(b => b.addEventListener('click', () => showEditProfileModal(container, b.dataset.uid)));
+  el.querySelectorAll('.aab').forEach(b => b.addEventListener('click', () => showAddAccountModal(container, b.dataset.uid)));
+  el.querySelectorAll('.mab').forEach(b => b.addEventListener('click', async () => { await updateUserRole(b.dataset.uid, 'admin'); profilesCache = await getAllProfiles(); renderUsersTab(container); }));
+  el.querySelectorAll('.rab').forEach(b => b.addEventListener('click', async () => { await updateUserRole(b.dataset.uid, 'user'); profilesCache = await getAllProfiles(); renderUsersTab(container); }));
+  el.querySelectorAll('.dub').forEach(b => b.addEventListener('click', () => deleteUserHandler(container, b.dataset.uid)));
+  el.querySelectorAll('.eab').forEach(b => b.addEventListener('click', () => showEditAccountModal(container, b.dataset.id)));
+  el.querySelectorAll('.dab').forEach(b => b.addEventListener('click', () => { if (!confirm('Delete this account?')) return; (async () => { await deleteAccount(b.dataset.id); accountsCache = await getAccounts(); renderUsersTab(container); })(); }));
+}
 
-  el.querySelectorAll('.remove-admin-btn').forEach((b) => {
-    b.addEventListener('click', async () => {
-      await updateUserRole(b.dataset.uid, 'user');
-      profilesCache = await getAllProfiles();
-      renderUsersTab(container);
-    });
+function renderTxnTab(container) {
+  const el = container.querySelector('#adminContent');
+  el.innerHTML = `<div class="ap-toolbar"><input class="ap-search" id="txnSearch" placeholder="Search transactions..."/><button class="ap-btn-create" id="addTxnBtn">+ Add Transaction</button></div><table class="ap-txn-table"><thead><tr><th>User</th><th>Account</th><th>Type</th><th>Amount</th><th>Date</th><th>Description</th><th>Actions</th></tr></thead><tbody>${transactionsCache.length === 0 ? '<tr><td colspan="7" class="ap-empty">No transactions</td></tr>' : transactionsCache.map(t => {
+    const acc = accountsCache.find(a => a.id === t.accountId);
+    const usr = acc ? profilesCache.find(p => p.id === acc.userId) : null;
+    return `<tr><td>${esc(usr?.name || usr?.email || '—')}</td><td>${esc(acc?.name || '—')}</td><td>${esc(t.type)}</td><td class="${t.type === 'deposit' || t.type === 'credit' ? 'text-success' : 'text-danger'}">$${fmt(Math.abs(t.amount))}</td><td>${t.date || ''}</td><td>${esc(t.description || '')}</td><td><div class="ap-actions"><button class="ap-btn etb" data-id="${t.id}">Edit</button><button class="ap-btn ap-btn-danger dtb" data-id="${t.id}">Delete</button></div></td></tr>`;
+  }).join('')}</tbody></table>`;
+  el.querySelector('#addTxnBtn').addEventListener('click', () => showTxnModal(container, null));
+  el.querySelectorAll('.etb').forEach(b => b.addEventListener('click', () => showTxnModal(container, b.dataset.id)));
+  el.querySelectorAll('.dtb').forEach(b => b.addEventListener('click', () => deleteTxnHandler(container, b.dataset.id)));
+}
+
+// ---- MODALS ----
+
+function showModal(container, title, bodyHtml, onSave) {
+  const ov = document.createElement('div');
+  ov.className = 'modal-overlay';
+  ov.innerHTML = `<div class="modal-content-admin"><div class="modal-header"><h5>${title}</h5><button class="btn-close modal-close"></button></div><div class="modal-body">${bodyHtml}</div><div class="modal-footer"><button class="btn btn-secondary modal-close">Cancel</button><button class="btn btn-primary" id="modalSaveBtn">Save</button></div></div>`;
+  document.body.appendChild(ov);
+  ov.querySelectorAll('.modal-close').forEach(b => b.addEventListener('click', () => ov.remove()));
+  ov.querySelector('#modalSaveBtn').addEventListener('click', async () => {
+    const btn = ov.querySelector('#modalSaveBtn');
+    btn.disabled = true; btn.textContent = 'Saving...';
+    try { await onSave(); ov.remove(); } catch (err) { alert('Error: ' + err.message); btn.disabled = false; btn.textContent = 'Save'; }
   });
 }
 
-// =================================================================
-//  MODALS — Accounts
-// =================================================================
-
-function showAccountModal(container, accountId) {
-  const account = accountId ? accountsCache.find((a) => a.id === accountId) : null;
-
-  showModal(
-    container,
-    account ? `Edit Account: ${escHtml(account.name)}` : 'Add Account',
-    `
-      <div class="mb-3">
-        <label>Account Name</label>
-        <input class="form-control" id="modalAccName"
-               value="${account ? escHtml(account.name) : ''}" />
-      </div>
-      <div class="mb-3">
-        <label>Type</label>
-        <select class="form-control" id="modalAccType">
-          <option ${account?.type === 'Checking' ? 'selected' : ''}>Checking</option>
-          <option ${account?.type === 'Savings' ? 'selected' : ''}>Savings</option>
-          <option ${account?.type === 'Credit' ? 'selected' : ''}>Credit</option>
-        </select>
-      </div>
-      <div class="mb-3">
-        <label>Balance</label>
-        <input class="form-control" id="modalAccBalance" type="number"
-               value="${account ? account.balance : '0'}" />
-      </div>
-      <div class="mb-3">
-        <label>User ID</label>
-        <input class="form-control" id="modalAccUser"
-               value="${account ? escHtml(account.userId || '') : ''}"
-               placeholder="User UUID" />
-        ${accountId ? '' : '<small class="text-muted">Leave empty to create an unassigned account</small>'}
-      </div>
-    `,
+function showCreateUserModal(container) {
+  showModal(container, 'Create New User', `
+    <div class="mb-3"><label>Email <span class="text-danger">*</span></label><input class="form-control" id="mUE" type="email" placeholder="user@example.com"/></div>
+    <div class="mb-3"><label>Password <span class="text-danger">*</span></label><div style="position:relative"><input class="form-control" id="mUP" type="password" placeholder="Min 6 characters" style="padding-right:44px"/><button type="button" class="pw-toggle" onclick="var i=this.previousElementSibling;var h=i.type==='password';i.type=h?'text':'password';this.textContent=h?'👁‍🗨':'👁'" tabindex="-1">👁</button></div></div>
+    <div class="mb-3"><label>Full Name</label><input class="form-control" id="mUN" placeholder="John Doe"/></div>
+    <hr/><h6>Bank Account (optional)</h6>
+    <div class="mb-3"><label>Account Name</label><input class="form-control" id="mUA" value="Checking Account"/></div>
+    <div class="mb-3"><label>Type</label><select class="form-control" id="mUT"><option>Checking</option><option>Savings</option><option>Credit Card</option></select></div>
+    <div class="mb-3"><label>Initial Balance</label><input class="form-control" id="mUB" type="number" step="0.01" value="0"/></div>`,
     async () => {
-      const name = document.querySelector('#modalAccName').value.trim();
-      const type = document.querySelector('#modalAccType').value;
-      const balance = parseFloat(document.querySelector('#modalAccBalance').value) || 0;
-      const userId = document.querySelector('#modalAccUser').value.trim() || null;
-      if (!name) return alert('Account name is required');
-
-      if (account) {
-        await updateAccount(account.id, { name, type, balance, userId });
-      } else {
-        await createAccount({ name, type, balance, userId });
-      }
-
-      accountsCache = await getAccounts();
-      renderAccountsTab(container);
-    }
-  );
+      const email = document.querySelector('#mUE').value.trim();
+      const password = document.querySelector('#mUP').value;
+      const name = document.querySelector('#mUN').value.trim();
+      if (!email) return alert('Email required');
+      if (!password || password.length < 6) return alert('Password must be 6+ chars');
+      const nu = await adminCreateUser(email, password);
+      await createUserProfile(nu.uid, email, name, nu.passwordHash);
+      const accName = document.querySelector('#mUA').value.trim();
+      if (accName) { await createAccount({ name: accName, type: document.querySelector('#mUT').value, balance: parseFloat(document.querySelector('#mUB').value) || 0, userId: nu.uid }); accountsCache = await getAccounts(); }
+      profilesCache = await getAllProfiles();
+      renderUsersTab(container);
+    });
 }
 
-function showBalanceModal(container, accountId) {
-  const account = accountsCache.find((a) => a.id === accountId);
-  if (!account) return;
-
-  showModal(
-    container,
-    `Adjust Balance: ${escHtml(account.name)}`,
-    `
-      <div class="mb-3">
-        <label>Current Balance: <strong>$${fmt(account.balance)}</strong></label>
-      </div>
-      <div class="mb-3">
-        <label>New Balance</label>
-        <input class="form-control" id="modalNewBalance" type="number"
-               value="${account.balance}" />
-      </div>
-    `,
+function showEditProfileModal(container, uid) {
+  const p = profilesCache.find(x => x.id === uid);
+  if (!p) return;
+  showModal(container, 'Edit Profile', `
+    <div class="mb-3"><label>Full Name</label><input class="form-control" id="mEN" value="${esc(p.name || '')}"/></div>
+    <div class="mb-3"><label>Email</label><input class="form-control" id="mEE" value="${esc(p.email || '')}"/></div>`,
     async () => {
-      const newBalance = parseFloat(document.querySelector('#modalNewBalance').value);
-      if (isNaN(newBalance)) return alert('Enter a valid number');
-      await updateAccount(accountId, { balance: newBalance });
+      const name = document.querySelector('#mEN').value.trim();
+      const email = document.querySelector('#mEE').value.trim();
+      await updateUserProfile(uid, { name, email });
+      profilesCache = await getAllProfiles();
+      renderUsersTab(container);
+    });
+}
+
+function showAddAccountModal(container, uid) {
+  showModal(container, 'Add Account', `
+    <div class="mb-3"><label>Account Name</label><input class="form-control" id="mAN" value="Checking Account"/></div>
+    <div class="mb-3"><label>Type</label><select class="form-control" id="mAT"><option>Checking</option><option>Savings</option><option>Credit Card</option></select></div>
+    <div class="mb-3"><label>Balance</label><input class="form-control" id="mAB" type="number" step="0.01" value="0"/></div>`,
+    async () => {
+      const name = document.querySelector('#mAN').value.trim();
+      if (!name) return alert('Name required');
+      await createAccount({ name, type: document.querySelector('#mAT').value, balance: parseFloat(document.querySelector('#mAB').value) || 0, userId: uid });
       accountsCache = await getAccounts();
-      renderAccountsTab(container);
-    }
-  );
+      renderUsersTab(container);
+    });
 }
 
-function deleteAccountHandler(container, accountId) {
-  if (!confirm('Delete this account permanently? This cannot be undone.')) return;
-  (async () => {
-    await deleteAccount(accountId);
-    accountsCache = await getAccounts();
-    transactionsCache = await getAllTransactions();
-    renderAccountsTab(container);
-  })();
+function showEditAccountModal(container, accId) {
+  const a = accountsCache.find(x => x.id === accId);
+  if (!a) return;
+  showModal(container, `Edit: ${esc(a.name)}`, `
+    <div class="mb-3"><label>Account Name</label><input class="form-control" id="mAN" value="${esc(a.name)}"/></div>
+    <div class="mb-3"><label>Type</label><select class="form-control" id="mAT"><option ${a.type==='Checking'?'selected':''}>Checking</option><option ${a.type==='Savings'?'selected':''}>Savings</option><option ${a.type==='Credit Card'?'selected':''}>Credit Card</option><option ${a.type==='Credit'?'selected':''}>Credit</option></select></div>
+    <div class="mb-3"><label>Balance</label><input class="form-control" id="mAB" type="number" step="0.01" value="${a.balance}"/></div>`,
+    async () => {
+      await updateAccount(accId, { name: document.querySelector('#mAN').value.trim(), type: document.querySelector('#mAT').value, balance: parseFloat(document.querySelector('#mAB').value) || 0 });
+      accountsCache = await getAccounts();
+      renderUsersTab(container);
+    });
 }
-
-// =================================================================
-//  MODALS — Transactions
-// =================================================================
 
 function showTxnModal(container, txnId) {
-  const txn = txnId ? transactionsCache.find((t) => t.id === txnId) : null;
-  const isEdit = !!txn;
-
-  showModal(
-    container,
-    isEdit ? 'Edit Transaction' : 'Add Transaction',
-    `
-      <div class="mb-3">
-        <label>Account</label>
-        <select class="form-control" id="modalTxnAccount">
-          <option value="">— Select Account —</option>
-          ${accountsCache
-            .map(
-              (a) =>
-                `<option value="${a.id}" ${txn?.accountId === a.id ? 'selected' : ''}>
-                  ${escHtml(a.name)} ($${fmt(a.balance)})
-                </option>`
-            )
-            .join('')}
-        </select>
-      </div>
-      <div class="mb-3">
-        <label>Type</label>
-        <select class="form-control" id="modalTxnType">
-          <option value="deposit" ${txn?.type === 'deposit' ? 'selected' : ''}>Deposit</option>
-          <option value="withdrawal" ${txn?.type === 'withdrawal' ? 'selected' : ''}>Withdrawal</option>
-          <option value="transfer" ${txn?.type === 'transfer' ? 'selected' : ''}>Transfer</option>
-        </select>
-      </div>
-      <div class="mb-3">
-        <label>Amount</label>
-        <input class="form-control" id="modalTxnAmount" type="number" step="0.01"
-               value="${txn ? txn.amount : ''}" />
-      </div>
-      <div class="mb-3">
-        <label>Description</label>
-        <input class="form-control" id="modalTxnDesc"
-               value="${txn ? escHtml(txn.description || '') : ''}" />
-      </div>
-      <div class="mb-3">
-        <label>Date</label>
-        <input class="form-control" id="modalTxnDate" type="date"
-               value="${txn ? txn.date : new Date().toISOString().split('T')[0]}" />
-      </div>
-    `,
+  const txn = txnId ? transactionsCache.find(t => t.id === txnId) : null;
+  showModal(container, txn ? 'Edit Transaction' : 'Add Transaction', `
+    <div class="mb-3"><label>Account</label><select class="form-control" id="mTA"><option value="">— Select —</option>${accountsCache.map(a => `<option value="${a.id}" ${txn?.accountId===a.id?'selected':''}>${esc(a.name)} ($${fmt(a.balance)})</option>`).join('')}</select></div>
+    <div class="mb-3"><label>Type</label><select class="form-control" id="mTT"><option value="deposit" ${txn?.type==='deposit'?'selected':''}>Deposit</option><option value="withdrawal" ${txn?.type==='withdrawal'?'selected':''}>Withdrawal</option><option value="transfer" ${txn?.type==='transfer'?'selected':''}>Transfer</option></select></div>
+    <div class="mb-3"><label>Amount</label><input class="form-control" id="mTAm" type="number" step="0.01" value="${txn?txn.amount:''}"/></div>
+    <div class="mb-3"><label>Description</label><input class="form-control" id="mTD" value="${txn?esc(txn.description||''):''}"/></div>
+    <div class="mb-3"><label>Date</label><input class="form-control" id="mTDt" type="date" value="${txn?txn.date:new Date().toISOString().split('T')[0]}"/></div>`,
     async () => {
-      const accountId = document.querySelector('#modalTxnAccount').value;
-      const type = document.querySelector('#modalTxnType').value;
-      const amount = parseFloat(document.querySelector('#modalTxnAmount').value);
-      const description = document.querySelector('#modalTxnDesc').value.trim();
-      const date = document.querySelector('#modalTxnDate').value;
-
-      if (!accountId) return alert('Please select an account');
+      const accountId = document.querySelector('#mTA').value;
+      const type = document.querySelector('#mTT').value;
+      const amount = parseFloat(document.querySelector('#mTAm').value);
+      const description = document.querySelector('#mTD').value.trim();
+      const date = document.querySelector('#mTDt').value;
+      if (!accountId) return alert('Select an account');
       if (!amount || amount <= 0) return alert('Amount must be positive');
-
-      if (isEdit) {
-        // Update transaction + recalculate account balance
-        const oldAcc = accountsCache.find((a) => a.id === txn.accountId);
-        const newAcc = accountsCache.find((a) => a.id === accountId);
-
-        // Reverse old txn effect on old account
-        if (oldAcc) {
-          const oldDelta = txn.type === 'deposit' ? -txn.amount : txn.amount;
-          await updateAccount(txn.accountId, { balance: oldAcc.balance + oldDelta });
-        }
-
-        await updateTransaction(txnId, { accountId, type, amount, description, date });  // Apply new txn effect on new account
-          if (newAcc) {
-            const newDelta = type === 'deposit' ? amount : -amount;
-            // effectiveBalance = balance after reversing the old txn
-            const effectiveBalance =
-              oldAcc?.id === newAcc.id
-                ? oldAcc.balance + (txn.type === 'deposit' ? -txn.amount : txn.amount)
-                : newAcc.balance;
-            await updateAccount(accountId, { balance: effectiveBalance + newDelta });
-          }
+      if (txn) {
+        const oldAcc = accountsCache.find(a => a.id === txn.accountId);
+        if (oldAcc) { const d = txn.type==='deposit'?-txn.amount:txn.amount; await updateAccount(txn.accountId,{balance:oldAcc.balance+d}); }
+        await updateTransaction(txnId, { accountId, type, amount, description, date });
+        const newAcc = accountsCache.find(a => a.id === accountId);
+        if (newAcc) { const eB = oldAcc?.id===newAcc.id ? oldAcc.balance+(txn.type==='deposit'?-txn.amount:txn.amount) : newAcc.balance; await updateAccount(accountId,{balance:eB+(type==='deposit'?amount:-amount)}); }
       } else {
         await createTransaction({ accountId, type, amount, description, date });
-
-        // Update account balance
-        const acc = accountsCache.find((a) => a.id === accountId);
-        if (acc) {
-          const delta = type === 'deposit' ? amount : -amount;
-          await updateAccount(accountId, { balance: acc.balance + delta });
-        }
+        const acc = accountsCache.find(a => a.id === accountId);
+        if (acc) await updateAccount(accountId, { balance: acc.balance + (type==='deposit'?amount:-amount) });
       }
+      [accountsCache, transactionsCache] = await Promise.all([getAccounts(), getAllTransactions()]);
+      renderTxnTab(container);
+    });
+}
 
-      [accountsCache, transactionsCache] = await Promise.all([
-        getAccounts(),
-        getAllTransactions(),
-      ]);
-      renderAccountsTab(container);
-    }
-  );
+async function deleteUserHandler(container, uid) {
+  if (!confirm('Delete this user and all their accounts? This cannot be undone.')) return;
+  const userAccounts = accountsCache.filter(a => a.userId === uid);
+  for (const acc of userAccounts) {
+    const txns = transactionsCache.filter(t => t.accountId === acc.id);
+    for (const t of txns) await deleteTransaction(t.id);
+    await deleteAccount(acc.id);
+  }
+  try { await updateUserProfile(uid, { email: null, name: 'DELETED', role: 'user' }); } catch (_) {}
+  [accountsCache, transactionsCache, profilesCache] = await Promise.all([getAccounts(), getAllTransactions(), getAllProfiles()]);
+  renderUsersTab(container);
 }
 
 function deleteTxnHandler(container, txnId) {
-  if (!confirm('Delete this transaction permanently? The account balance will be adjusted.')) return;
+  if (!confirm('Delete this transaction?')) return;
   (async () => {
-    const txn = transactionsCache.find((t) => t.id === txnId);
-    if (txn) {
-      // Reverse the transaction's effect on the account balance
-      const acc = accountsCache.find((a) => a.id === txn.accountId);
-      if (acc) {
-        const delta = txn.type === 'deposit' ? -txn.amount : txn.amount;
-        await updateAccount(txn.accountId, { balance: acc.balance + delta });
-      }
-    }
+    const txn = transactionsCache.find(t => t.id === txnId);
+    if (txn) { const acc = accountsCache.find(a => a.id === txn.accountId); if (acc) { await updateAccount(txn.accountId, { balance: acc.balance + (txn.type==='deposit'?-txn.amount:txn.amount) }); } }
     await deleteTransaction(txnId);
-    [accountsCache, transactionsCache] = await Promise.all([
-      getAccounts(),
-      getAllTransactions(),
-    ]);
-    renderTransactionsTab(container);
+    [accountsCache, transactionsCache] = await Promise.all([getAccounts(), getAllTransactions()]);
+    renderTxnTab(container);
   })();
 }
 
-// =================================================================
-//  MODAL — Create User
-// =================================================================
-
-function showCreateUserModal(container) {
-  showModal(
-    container,
-    'Create New User',
-    `
-      <div class="mb-3">
-        <label>Email <span class="text-danger">*</span></label>
-        <input class="form-control" id="modalUserEmail" type="email" placeholder="user@example.com" />
-      </div>
-      <div class="mb-3">
-        <label>Password <span class="text-danger">*</span></label>
-        <input class="form-control" id="modalUserPassword" type="password" placeholder="Min 6 characters" />
-      </div>
-      <div class="mb-3">
-        <label>Full Name</label>
-        <input class="form-control" id="modalUserName" placeholder="John Doe" />
-      </div>
-      <hr/>
-      <h6>Bank Account (optional)</h6>
-      <div class="mb-3">
-        <label>Account Name</label>
-        <input class="form-control" id="modalUserAccName" value="Checking Account" />
-      </div>
-      <div class="mb-3">
-        <label>Account Type</label>
-        <select class="form-control" id="modalUserAccType">
-          <option>Checking</option>
-          <option>Savings</option>
-          <option>Credit</option>
-        </select>
-      </div>
-      <div class="mb-3">
-        <label>Initial Balance</label>
-        <input class="form-control" id="modalUserAccBalance" type="number" step="0.01" value="0" />
-      </div>
-    `,
-    async () => {
-      const email = document.querySelector('#modalUserEmail').value.trim();
-      const password = document.querySelector('#modalUserPassword').value;
-      const name = document.querySelector('#modalUserName').value.trim();
-      const accName = document.querySelector('#modalUserAccName').value.trim();
-      const accType = document.querySelector('#modalUserAccType').value;
-      const accBalance = parseFloat(document.querySelector('#modalUserAccBalance').value) || 0;
-
-      if (!email) return alert('Email is required');
-      if (!password || password.length < 6) return alert('Password must be at least 6 characters');
-
-      // 1. Create auth user (without disrupting admin session)
-      const newUser = await adminCreateUser(email, password);
-
-      // 2. Create profile
-      await createUserProfile(newUser.uid, email, name, newUser.passwordHash);
-
-      // 3. Create bank account if name provided
-      if (accName) {
-        await createAccount({ name: accName, type: accType, balance: accBalance, userId: newUser.uid });
-        accountsCache = await getAccounts();
-      }
-
-      profilesCache = await getAllProfiles();
-      renderUsersTab(container);
-    }
-  );
-}
-
-// =================================================================
-//  HELPERS
-// =================================================================
-
-function resolveUserName(userId) {
-  if (!userId) return '<span class="text-muted">—</span>';
-  const p = profilesCache.find((p) => p.id === userId);
-  return p
-    ? escHtml(p.name || p.email || userId.slice(0, 12) + '...')
-    : userId.slice(0, 12) + '...';
-}
-
-function resolveAccountName(accountId) {
-  if (!accountId) return '<span class="text-muted">—</span>';
-  const a = accountsCache.find((a) => a.id === accountId);
-  return a ? escHtml(a.name) : accountId.slice(0, 12) + '...';
-}
-
-function showModal(container, title, bodyHtml, onSave) {
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
-  overlay.innerHTML = `
-    <div class="modal-content-admin">
-      <div class="modal-header">
-        <h5>${title}</h5>
-        <button class="btn-close modal-close"></button>
-      </div>
-      <div class="modal-body">${bodyHtml}</div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary modal-close">Cancel</button>
-        <button class="btn btn-primary" id="modalSaveBtn">Save</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-
-  overlay.querySelectorAll('.modal-close').forEach((b) =>
-    b.addEventListener('click', () => overlay.remove())
-  );
-  overlay.querySelector('#modalSaveBtn').addEventListener('click', async () => {
-    const btn = overlay.querySelector('#modalSaveBtn');
-    btn.disabled = true;
-    btn.textContent = 'Saving...';
-    try {
-      await onSave();
-      overlay.remove();
-    } catch (err) {
-      alert('Error: ' + err.message);
-      btn.disabled = false;
-      btn.textContent = 'Save';
-    }
-  });
-}
-
-function escHtml(str) {
-  if (!str) return '';
-  const d = document.createElement('div');
-  d.textContent = str;
-  return d.innerHTML;
-}
-
-function fmt(num) {
-  return Math.abs(num).toLocaleString('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
-// =================================================================
-//  WITHDRAWALS TAB & HELPERS
-// =================================================================
-
-async function renderWithdrawalsTab(container) {
-  const el = container.querySelector('#adminContent');
-  
-  el.innerHTML = `
-    <div class="text-center py-5">
-      <div class="spinner-border text-primary" role="status"></div>
-    </div>
-  `;
-  
-  let withdrawalsEnabled = true;
-  try {
-    withdrawalsEnabled = await getWithdrawalStatus();
-  } catch (err) {
-    console.error('Error fetching withdrawal status:', err);
-  }
-  
-  const withdrawals = transactionsCache.filter(t => t.description && t.description.includes('[Withdrawal Request]'));
-  
-  el.innerHTML = `
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-      <h3 class="mb-0">Withdrawal Applications</h3>
-      <div class="d-flex align-items-center gap-2 bg-white px-3 py-2 rounded shadow-sm border">
-        <label class="form-check-label mb-0 font-weight-bold" for="withdrawToggle" id="withdrawToggleLabel" style="cursor:pointer; font-size: 0.9em; user-select:none;">
-          ${withdrawalsEnabled ? '<span class="text-success"><i class="fas fa-check-circle me-1"></i> Withdrawals Enabled</span>' : '<span class="text-danger"><i class="fas fa-times-circle me-1"></i> Withdrawals Disabled</span>'}
-        </label>
-        <div class="form-check form-switch mb-0">
-          <input class="form-check-input" type="checkbox" id="withdrawToggle" ${withdrawalsEnabled ? 'checked' : ''} style="cursor:pointer; width:38px; height:20px;">
-        </div>
-      </div>
-    </div>
-    <div class="table-responsive">
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th>Source Account</th>
-            <th>Amount</th>
-            <th>Beneficiary Details</th>
-            <th>Date</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${withdrawals.length === 0
-            ? `<tr><td colspan="6" class="text-center py-4 text-muted">No withdrawal applications found.</td></tr>`
-            : withdrawals.map((t) => {
-                const w = parseWithdrawalDesc(t.description);
-                let statusBadge = 'bg-secondary';
-                if (w.status.toLowerCase() === 'approved') statusBadge = 'bg-success';
-                else if (w.status.toLowerCase() === 'declined' || w.status.toLowerCase() === 'rejected') statusBadge = 'bg-danger';
-                else if (w.status.toLowerCase() === 'pending') statusBadge = 'bg-warning text-dark';
-                
-                return `
-                  <tr>
-                    <td>
-                      <strong>${resolveAccountName(t.accountId)}</strong>
-                    </td>
-                    <td>$${fmt(t.amount)}</td>
-                    <td>
-                      <div class="small">
-                        <strong>Bank:</strong> ${escHtml(w.bank)}<br>
-                        <strong>Acc #:</strong> ${escHtml(w.acc)}<br>
-                        <strong>Routing:</strong> ${escHtml(w.routing)}<br>
-                        <strong>Holder:</strong> ${escHtml(w.holder)}
-                      </div>
-                    </td>
-                    <td>${t.date || ''}</td>
-                    <td>
-                      <span class="badge ${statusBadge}">${escHtml(w.status)}</span>
-                    </td>
-                    <td>
-                      <button class="btn btn-sm btn-outline-primary edit-withdrawal-btn" data-id="${t.id}">Edit</button>
-                      <button class="btn btn-sm btn-danger delete-withdrawal-btn" data-id="${t.id}">Delete</button>
-                    </td>
-                  </tr>
-                `;
-              }).join('')}
-        </tbody>
-      </table>
-    </div>
-  `;
-
-  const toggleInput = el.querySelector('#withdrawToggle');
-  const toggleLabel = el.querySelector('#withdrawToggleLabel');
-  if (toggleInput && toggleLabel) {
-    toggleInput.addEventListener('change', async (e) => {
-      const isChecked = e.target.checked;
-      toggleInput.disabled = true;
-      try {
-        await setWithdrawalStatus(isChecked);
-        toggleLabel.innerHTML = isChecked 
-          ? '<span class="text-success"><i class="fas fa-check-circle me-1"></i> Withdrawals Enabled</span>' 
-          : '<span class="text-danger"><i class="fas fa-times-circle me-1"></i> Withdrawals Disabled</span>';
-      } catch (err) {
-        alert('Error updating status: ' + err.message);
-        toggleInput.checked = !isChecked; // revert
-      } finally {
-        toggleInput.disabled = false;
-      }
-    });
-  }
-
-  el.querySelectorAll('.edit-withdrawal-btn').forEach((b) =>
-    b.addEventListener('click', () => showWithdrawalTxnModal(container, b.dataset.id))
-  );
-  el.querySelectorAll('.delete-withdrawal-btn').forEach((b) =>
-    b.addEventListener('click', () => deleteWithdrawalHandler(container, b.dataset.id))
-  );
-}
-
-function parseWithdrawalDesc(desc) {
-  const defaults = { bank: '', acc: '', routing: '', holder: '', status: 'Pending' };
-  if (!desc || !desc.includes('[Withdrawal Request]')) return defaults;
-  
-  const parts = desc.replace('[Withdrawal Request]', '').split('|');
-  const map = {};
-  parts.forEach(p => {
-    const idx = p.indexOf(':');
-    if (idx !== -1) {
-      const key = p.substring(0, idx).trim().toLowerCase();
-      const val = p.substring(idx + 1).trim();
-      map[key] = val;
-    }
-  });
-  return {
-    bank: map.bank || '',
-    acc: map.acc || '',
-    routing: map.routing || '',
-    holder: map.holder || '',
-    status: map.status || 'Pending'
-  };
-}
-
-function formatWithdrawalDesc(bank, acc, routing, holder, status) {
-  return `[Withdrawal Request] Bank: ${bank} | Acc: ${acc} | Routing: ${routing} | Holder: ${holder} | Status: ${status}`;
-}
-
-function showWithdrawalTxnModal(container, txnId) {
-  const txn = transactionsCache.find((t) => t.id === txnId);
-  if (!txn) return;
-  const w = parseWithdrawalDesc(txn.description);
-
-  showModal(
-    container,
-    'Edit Withdrawal Details & Status',
-    `
-      <div class="mb-3">
-        <label class="form-label">Source Account</label>
-        <select class="form-control" id="modalWSource" disabled>
-          <option value="${txn.accountId}">${resolveAccountName(txn.accountId)}</option>
-        </select>
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Withdrawal Amount ($)</label>
-        <input class="form-control" id="modalWAmount" type="number" step="0.01" value="${txn.amount}" required />
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Beneficiary Bank Name</label>
-        <input class="form-control" id="modalWBank" type="text" value="${escHtml(w.bank)}" required />
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Routing Transit Number</label>
-        <input class="form-control" id="modalWRouting" type="text" value="${escHtml(w.routing)}" required />
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Beneficiary Account Number</label>
-        <input class="form-control" id="modalWAccNum" type="text" value="${escHtml(w.acc)}" required />
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Beneficiary Account Holder Name</label>
-        <input class="form-control" id="modalWHolder" type="text" value="${escHtml(w.holder)}" required />
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Application Status</label>
-        <select class="form-control" id="modalWStatus">
-          <option value="Pending" ${w.status === 'Pending' ? 'selected' : ''}>Pending</option>
-          <option value="Approved" ${w.status === 'Approved' ? 'selected' : ''}>Approved</option>
-          <option value="Declined" ${w.status === 'Declined' ? 'selected' : ''}>Declined</option>
-          <option value="Processing" ${w.status === 'Processing' ? 'selected' : ''}>Processing</option>
-        </select>
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Request Date</label>
-        <input class="form-control" id="modalWDate" type="date" value="${txn.date || ''}" required />
-      </div>
-    `,
-    async () => {
-      const newAmount = parseFloat(document.querySelector('#modalWAmount').value);
-      const bank = document.querySelector('#modalWBank').value.trim();
-      const routing = document.querySelector('#modalWRouting').value.trim();
-      const acc = document.querySelector('#modalWAccNum').value.trim();
-      const holder = document.querySelector('#modalWHolder').value.trim();
-      const status = document.querySelector('#modalWStatus').value;
-      const date = document.querySelector('#modalWDate').value;
-
-      if (isNaN(newAmount) || newAmount <= 0) return alert('Amount must be positive');
-      if (!bank || !routing || !acc || !holder) return alert('All beneficiary fields are required');
-
-      const oldAmount = txn.amount;
-      const amountChanged = oldAmount !== newAmount;
-
-      const newDescription = formatWithdrawalDesc(bank, acc, routing, holder, status);
-
-      await updateTransaction(txnId, {
-        amount: newAmount,
-        description: newDescription,
-        date
-      });
-
-      if (amountChanged) {
-        const sourceAcc = accountsCache.find(a => a.id === txn.accountId);
-        if (sourceAcc) {
-          const refundBalance = sourceAcc.balance + oldAmount;
-          const finalBalance = refundBalance - newAmount;
-          await updateAccount(txn.accountId, { balance: finalBalance });
-        }
-      }
-
-      [accountsCache, transactionsCache] = await Promise.all([
-        getAccounts(),
-        getAllTransactions(),
-      ]);
-      renderWithdrawalsTab(container);
-    }
-  );
-}
-
-function deleteWithdrawalHandler(container, txnId) {
-  if (!confirm('Delete this withdrawal application? The account balance will be refunded by the withdrawal amount.')) return;
-  (async () => {
-    const txn = transactionsCache.find((t) => t.id === txnId);
-    if (txn) {
-      const acc = accountsCache.find((a) => a.id === txn.accountId);
-      if (acc) {
-        await updateAccount(txn.accountId, { balance: acc.balance + txn.amount });
-      }
-      await deleteTransaction(txnId);
-      
-      [accountsCache, transactionsCache] = await Promise.all([
-        getAccounts(),
-        getAllTransactions(),
-      ]);
-      renderWithdrawalsTab(container);
-    }
-  })();
-}
+function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function fmt(n) { return Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }

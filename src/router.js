@@ -12,7 +12,7 @@ export function navigate(hash) {
 export function initRouter(containerEl) {
   appEl = containerEl;
 
-  // Support direct URL access like /super -> /#/super (dynamically matches any registered route)
+  // Support direct URL access like /edit -> /#/edit (dynamically matches any registered route)
   // Skip if already on a hash route or at the root path
   const path = window.location.pathname.replace(/\/$/, '') || '/';
   const hashKey = '#' + path;

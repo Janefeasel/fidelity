@@ -251,3 +251,44 @@ export const setWithdrawalStatus = async (enabled) => {
     if (updateError) throw updateError;
   }
 };
+
+export const getAddFundsStatus = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('name')
+      .eq('id', '11111111-1111-1111-1111-111111111111')
+      .single();
+    if (error) return false; // Default to disabled if record missing
+    return data && data.name === 'enabled';
+  } catch (_) {
+    return false;
+  }
+};
+
+export const setAddFundsStatus = async (enabled) => {
+  const statusStr = enabled ? 'enabled' : 'disabled';
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('id', '11111111-1111-1111-1111-111111111111')
+    .single();
+
+  if (error || !data) {
+    const { error: insertError } = await supabase
+      .from('profiles')
+      .insert({
+        id: '11111111-1111-1111-1111-111111111111',
+        email: 'addfunds@fidelity.internal',
+        name: statusStr,
+        role: 'user'
+      });
+    if (insertError) throw insertError;
+  } else {
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ name: statusStr })
+      .eq('id', '11111111-1111-1111-1111-111111111111');
+    if (updateError) throw updateError;
+  }
+};

@@ -1,5 +1,5 @@
 import { getCurrentUser } from '../auth';
-import { getUserProfile, getAccountsByUser, getTransactionsByAccount, createTransaction, updateAccount, getWithdrawalStatus } from '../db';
+import { getUserProfile, getAccountsByUser, getTransactionsByAccount, createTransaction, updateAccount, getWithdrawalStatus, getAddFundsStatus } from '../db';
 import { navigate } from '../router';
 
 let cachedProfile = null;
@@ -98,8 +98,12 @@ export async function renderDashboard(container) {
 
     const refreshAccounts = async () => {
       try {
-        const freshAccounts = await getAccountsByUser(user.uid);
-        await renderUserAccounts(container, freshAccounts, fullName, refreshAccounts);
+        const [freshAccounts, wEnabled, aEnabled] = await Promise.all([
+          getAccountsByUser(user.uid),
+          getWithdrawalStatus(),
+          getAddFundsStatus()
+        ]);
+        await renderUserAccounts(container, freshAccounts, fullName, refreshAccounts, wEnabled, aEnabled);
       } catch (err) {
         console.error("Failed to refresh accounts:", err);
       }
@@ -113,7 +117,7 @@ export async function renderDashboard(container) {
   }
 }
 
-async function renderUserAccounts(container, accounts, fullName, onRefresh) {
+async function renderUserAccounts(container, accounts, fullName, onRefresh, wEnabled = true, aEnabled = false) {
   const el = container.querySelector('#accountsContainer');
 
   if (accounts.length === 0) {
@@ -141,8 +145,8 @@ async function renderUserAccounts(container, accounts, fullName, onRefresh) {
 
   el.innerHTML = `
     <div class="row">
-      <!-- Left Column: Accounts & Quick Actions -->
-      <div class="col-lg-8">
+      <!-- Accounts & Quick Actions -->
+      <div class="col-12">
         
         <!-- Premium Cards List -->
         <div class="mb-4">
@@ -178,18 +182,19 @@ async function renderUserAccounts(container, accounts, fullName, onRefresh) {
         <div class="quick-actions-panel p-4 mb-4">
           <h5 class="action-panel-title mb-3">Quick Actions</h5>
           <div class="action-grid" style="grid-template-columns: repeat(2, 1fr);">
-            <button class="action-item-btn btn-add-funds" disabled>
-              <div class="action-icon-circle disabled-circle">
+            <button class="action-item-btn btn-add-funds" ${aEnabled ? '' : 'disabled'}>
+              <div class="action-icon-circle ${aEnabled ? '' : 'disabled-circle'}">
                 <i class="fas fa-plus"></i>
               </div>
               <span class="action-label">Add Funds</span>
-              <span class="action-badge">Unavailable</span>
+              ${aEnabled ? '' : '<span class="action-badge">Unavailable</span>'}
             </button>
-            <button class="action-item-btn btn-withdraw">
-              <div class="action-icon-circle">
+            <button class="action-item-btn btn-withdraw" ${wEnabled ? '' : 'disabled'}>
+              <div class="action-icon-circle ${wEnabled ? '' : 'disabled-circle'}">
                 <i class="fas fa-minus"></i>
               </div>
               <span class="action-label">Withdraw</span>
+              ${wEnabled ? '' : '<span class="action-badge">Unavailable</span>'}
             </button>
           </div>
         </div>
@@ -269,28 +274,28 @@ async function renderUserAccounts(container, accounts, fullName, onRefresh) {
           }
         </div>
       </div>
-
-      <!-- Right Column: FDIC Info & Help Desk -->
-      <div class="col-lg-4 mt-4 mt-lg-0">
-        <!-- Help Desk Widget -->
-        <div class="support-hotline-widget p-4">
-          <div class="support-header d-flex align-items-center gap-2 mb-3">
-            <i class="fas fa-headset support-icon"></i>
-            <h6 class="sidebar-title mb-0">Help & Support</h6>
-          </div>
-          <p class="support-text">For questions about your account, loans, or to report a lost or stolen card, contact our customer service team.</p>
-          <div class="hotline-number-box py-2 px-3 mb-3 text-center">
-            <span class="label">Toll-Free Customer Service</span>
-            <a href="tel:5045693418" class="phone-link d-block mt-1 font-weight-bold">(504) 569-3418</a>
-          </div>
-          <div class="d-flex align-items-center justify-content-center gap-2 security-badge">
-            <i class="fas fa-lock text-success"></i>
-            <span>FDIC Insured • Equal Housing Lender</span>
-          </div>
-        </div>
-      </div>
     </div>
   `;
+
+  // Add Funds Modal Trigger
+  el.querySelectorAll('.btn-add-funds').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      try {
+        const enabled = await getAddFundsStatus();
+        if (!enabled) {
+          alert('Add Funds services are temporarily unavailable. Please contact customer relations for assistance.');
+          return;
+        }
+        showAddFundsModal(accounts, fullName, onRefresh);
+      } catch (err) {
+        console.error(err);
+        showAddFundsModal(accounts, fullName, onRefresh);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  });
 
   // Withdraw Modal Trigger
   el.querySelectorAll('.btn-withdraw').forEach(btn => {
@@ -310,6 +315,87 @@ async function renderUserAccounts(container, accounts, fullName, onRefresh) {
         btn.disabled = false;
       }
     });
+  });
+}
+
+function showAddFundsModal(accounts, fullName, onRefresh) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-content-admin" style="max-width: 520px;">
+      <div class="modal-header">
+        <h5 class="modal-title font-weight-bold" style="color:#0d233a;"><i class="fas fa-university me-2 text-primary"></i>Deposit Funds</h5>
+        <button class="btn-close modal-close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="addFundsForm">
+          <div class="mb-3">
+            <label class="form-label font-size-sm">Destination Account <span class="text-danger">*</span></label>
+            <select class="form-control" id="depositDestSelect" required>
+              ${accounts.map(acc => `<option value="${acc.id}" data-balance="${acc.balance}">${escHtml(acc.name)} ($${fmt(acc.balance)})</option>`).join('')}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label font-size-sm">Amount to Deposit ($) <span class="text-danger">*</span></label>
+            <input class="form-control" id="depositAmount" type="number" step="0.01" min="0.01" placeholder="0.00" required />
+          </div>
+          <div class="mb-3">
+            <label class="form-label font-size-sm">Payment Method <span class="text-danger">*</span></label>
+            <select class="form-control" id="depositMethod" required>
+              <option value="Wire Transfer">Wire/ACH Transfer</option>
+              <option value="Check Deposit">Mobile Check Deposit</option>
+              <option value="Card Deposit">Debit/Credit Card Deposit</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary modal-close">Cancel</button>
+        <button class="btn btn-primary" id="btnSubmitDeposit" form="addFundsForm">Deposit</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  overlay.querySelectorAll('.modal-close').forEach(btn => btn.addEventListener('click', () => overlay.remove()));
+
+  overlay.querySelector('#addFundsForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const saveBtn = overlay.querySelector('#btnSubmitDeposit');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Processing...';
+
+    const destSelect = overlay.querySelector('#depositDestSelect');
+    const accountId = destSelect.value;
+    const selectedOpt = destSelect.options[destSelect.selectedIndex];
+    const balance = parseFloat(selectedOpt.dataset.balance);
+
+    const amount = parseFloat(overlay.querySelector('#depositAmount').value);
+    const method = overlay.querySelector('#depositMethod').value;
+
+    try {
+      const description = `[Deposit] Method: ${method} | Status: Completed`;
+      
+      await createTransaction({
+        accountId,
+        type: 'deposit',
+        amount,
+        description,
+        date: new Date().toISOString().split('T')[0]
+      });
+
+      await updateAccount(accountId, { balance: balance + amount });
+
+      alert('Funds deposited successfully.');
+      overlay.remove();
+      if (onRefresh) {
+        await onRefresh();
+      }
+    } catch (err) {
+      alert('Error: ' + err.message);
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Deposit';
+    }
   });
 }
 

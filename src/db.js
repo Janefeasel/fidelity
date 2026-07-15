@@ -23,4 +23,6 @@ export {
   deleteTransaction,
   getWithdrawalStatus,
   setWithdrawalStatus,
+  getAddFundsStatus,
+  setAddFundsStatus,
 } from './services/database';

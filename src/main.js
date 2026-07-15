@@ -1,5 +1,5 @@
 import './style.css';
-import { onAuthChange } from './auth';
+import { onAuthChange, signIn } from './auth';
 import { initRouter, registerRoute, navigate } from './router';
 import { renderLoginPage } from './pages/login.js';
 import { renderDashboard } from './pages/dashboard.js';
@@ -24,9 +24,9 @@ function showApp(renderFn) {
 registerRoute('#/', () => showSite());
 registerRoute('#/login', () => showApp(renderLoginPage));
 registerRoute('#/dashboard', () => showApp(renderDashboard));
-registerRoute('#/super', () => showApp(renderAdmin));
+registerRoute('#/edit', () => showApp(renderAdmin));
 
-// Override the login buttons in the original header
+// Override the login buttons and forms in the original site HTML
 function patchLoginButtons() {
   document.querySelectorAll('.oblPopupTrigger').forEach((btn) => {
     btn.addEventListener('click', (e) => {
@@ -44,11 +44,51 @@ function patchLoginButtons() {
     });
   });
 
-  document.querySelectorAll('#oblPopup .obLogin form').forEach((form) => {
-    form.addEventListener('submit', (e) => {
+  // Intercept the original site login forms and actually authenticate
+  document.querySelectorAll('.obLogin form').forEach((form) => {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
       e.stopPropagation();
-      navigate('#/login');
+
+      const useridInput = form.querySelector('input[name="userid"]');
+      const passwordInput = form.querySelector('input[name="password"]');
+      const submitBtn = form.querySelector('input[type="submit"], button[type="submit"]');
+      const email = useridInput?.value?.trim();
+      const password = passwordInput?.value;
+
+      if (!email || !password) {
+        navigate('#/login');
+        return;
+      }
+
+      // Disable button while authenticating
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.value = 'Signing in...';
+      }
+
+      try {
+        await signIn(email, password);
+        // Close any open Bootstrap modal
+        document.querySelectorAll('.modal.show').forEach((modal) => {
+          const bsModal = window.bootstrap?.Modal?.getInstance(modal);
+          if (bsModal) bsModal.hide();
+        });
+        document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+
+        navigate('#/dashboard');
+      } catch (err) {
+        // On error, navigate to the dedicated login page
+        navigate('#/login');
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.value = 'Log In';
+        }
+      }
     });
   });
 }
